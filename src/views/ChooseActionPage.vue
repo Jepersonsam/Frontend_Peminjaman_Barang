@@ -58,6 +58,8 @@
       </div>
     </div>
 
+    
+
     <!-- Additional Info -->
     <div class="mt-12 text-center">
       <div class="inline-flex items-center bg-gray-50 rounded-full px-6 py-3 text-sm text-gray-600">
