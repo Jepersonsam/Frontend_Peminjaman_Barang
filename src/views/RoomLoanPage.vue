@@ -52,11 +52,23 @@
           <label class="block font-semibold text-lg text-gray-700 mb-2"
             >Kontak</label
           >
-          <input
-            v-model="form.borrower_contact"
-            type="text"
-            class="w-full px-5 py-4 border-2 border-gray-200 rounded-2xl bg-gray-50"
-          />
+          <div class="relative">
+            <div
+              class="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none text-gray-500 text-lg"
+            >
+              +62
+            </div>
+            <input
+              v-model="form.borrower_contact_number"
+              type="tel"
+              inputmode="numeric"
+              pattern="[0-9]*"
+              maxlength="15"
+              placeholder="81234567890"
+              class="w-full pl-16 pr-5 py-4 border-2 border-gray-200 rounded-2xl bg-gray-50 text-lg"
+              required
+            />
+          </div>
         </div>
 
         <div>
@@ -190,6 +202,62 @@
           </button>
         </div>
       </form>
+      <!-- Modal Notifikasi -->
+      <div
+        v-if="showModal"
+        class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50"
+      >
+        <div
+          class="bg-white p-8 rounded-3xl shadow-2xl max-w-md w-full text-center border border-gray-200"
+        >
+          <div
+            class="flex items-center justify-center w-16 h-16 mx-auto mb-4 rounded-full"
+            :class="{
+              'bg-green-100': modalType === 'success',
+              'bg-yellow-100': modalType === 'warning',
+              'bg-red-100': modalType === 'error',
+            }"
+          >
+            <svg
+              class="w-8 h-8"
+              :class="{
+                'text-green-600': modalType === 'success',
+                'text-yellow-600': modalType === 'warning',
+                'text-red-600': modalType === 'error',
+              }"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                :d="
+                  {
+                    success: 'M5 13l4 4L19 7',
+                    warning:
+                      'M12 8v4m0 4h.01M12 2a10 10 0 100 20 10 10 0 000-20z',
+                    error: 'M6 18L18 6M6 6l12 12',
+                  }[modalType]
+                "
+              />
+            </svg>
+          </div>
+          <h2 class="text-2xl font-bold text-gray-800 mb-2">
+            {{ modalTitle }}
+          </h2>
+          <p class="text-gray-600 mb-6">{{ modalMessage }}</p>
+          <div class="flex justify-center">
+            <button
+              @click="closeModal"
+              class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-xl font-semibold shadow"
+            >
+              Tutup
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -197,8 +265,9 @@
 <script setup>
 import { ref, watch, onMounted } from "vue";
 import axios from "@/services/api";
-import { useRouter } from "vue-router";
+import { useRouter, useRoute } from "vue-router";
 
+const route = useRoute();
 const router = useRouter();
 
 const rooms = ref([]);
@@ -208,7 +277,8 @@ const selectedDate = ref("");
 const form = ref({
   room_id: "",
   borrower_name: "",
-  borrower_contact: "",
+  borrower_contact_number: "", // hanya angka setelah +62
+  borrower_contact: "", // hasil gabungan akhir (untuk disubmit)
   purpose: "",
   start_time: "",
   end_time: "",
@@ -218,13 +288,54 @@ const form = ref({
   status: "pending",
 });
 
+// Modal state
+const showModal = ref(false);
+const modalType = ref("success"); // 'success', 'error', 'warning'
+const modalTitle = ref("");
+const modalMessage = ref("");
+
+const showCustomModal = (type, title, message) => {
+  modalType.value = type;
+  modalTitle.value = title;
+  modalMessage.value = message;
+  showModal.value = true;
+};
+
+const closeModal = () => {
+  showModal.value = false;
+};
+
 const getRooms = async () => {
   try {
     const res = await axios.get("/rooms");
     rooms.value = res.data;
   } catch (err) {
-    alert("Gagal mengambil data ruangan");
+    showCustomModal("error", "Gagal Memuat", "Gagal mengambil data ruangan.");
     console.error(err);
+  }
+};
+
+const audioSuccess = new Audio("/sounds/success-beep.mp3");
+const playBeep = () => {
+  try {
+    audioSuccess.play();
+  } catch (e) {
+    console.warn("Gagal memutar audio:", e);
+  }
+};
+
+const getCurrentUser = async () => {
+  const code = route.query.code;
+  if (!code) return;
+  try {
+    const res = await axios.get(`/users/by-code/${code}`);
+    const user = res.data.data;
+    form.value.borrower_name = user.name;
+    form.value.borrower_contact_number =
+      user.phone?.replace(/^(\+62)/, "") ?? "";
+    form.value.emails = user.email;
+  } catch (err) {
+    console.error("Gagal mengambil data user dari code", err);
   }
 };
 
@@ -237,7 +348,6 @@ const isValidMultipleEmails = (emails) => {
 
 const checkRoomAvailability = async () => {
   if (!form.value.room_id || !selectedDate.value) return;
-
   try {
     const res = await axios.get("/room-loans/check-availability", {
       params: {
@@ -254,6 +364,7 @@ const checkRoomAvailability = async () => {
 const handleSubmit = async () => {
   form.value.start_time = `${selectedDate.value}T${form.value.start_time_only}`;
   form.value.end_time = `${selectedDate.value}T${form.value.end_time_only}`;
+  form.value.borrower_contact = "+62" + form.value.borrower_contact_number;
 
   if (form.value.emails) {
     const emailsArray = form.value.emails
@@ -261,23 +372,25 @@ const handleSubmit = async () => {
       .map((e) => e.trim())
       .filter((e) => e !== "");
 
-    if (
-      !emailsArray.every((email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))
-    ) {
-      alert(
-        "⛔ Format email tidak valid! Pastikan email dipisahkan dengan koma."
+    if (!emailsArray.every((email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))) {
+      showCustomModal(
+        "warning",
+        "Format Email Tidak Valid",
+        "Pastikan email dipisahkan dengan koma dan sesuai format."
       );
       return;
     }
 
-    // ✅ ini bagian yang diganti
-    form.value.emails = emailsArray; // langsung array of string
-    form.value.attendees = emailsArray.map((email) => ({ email })); // untuk Google Calendar
+    form.value.emails = emailsArray;
+    form.value.attendees = emailsArray.map((email) => ({ email }));
   }
 
   try {
     await axios.post("/room-loans", form.value);
-    alert("✅ Peminjaman berhasil diajukan!");
+    showCustomModal("success", "Peminjaman Berhasil", "Ruangan berhasil diajukan!");
+    playBeep(); // ✅ mainkan suara notifikasi
+
+    // ✅ Reset form setelah berhasil
     form.value = {
       room_id: "",
       borrower_name: "",
@@ -294,9 +407,17 @@ const handleSubmit = async () => {
     selectedDate.value = "";
   } catch (err) {
     if (err.response && err.response.status === 409) {
-      alert("⛔ Ruangan sudah dibooking di waktu tersebut!");
+      showCustomModal(
+        "warning",
+        "Waktu Bentrok",
+        "Ruangan sudah dibooking di waktu tersebut!"
+      );
     } else {
-      alert("❌ Terjadi kesalahan saat mengajukan");
+      showCustomModal(
+        "error",
+        "Terjadi Kesalahan",
+        "Gagal mengajukan peminjaman. Silakan coba lagi."
+      );
       console.error(err);
     }
   }
@@ -347,5 +468,8 @@ const goBack = () => {
   router.push("/");
 };
 
-onMounted(getRooms);
+onMounted(() => {
+  getRooms();
+  getCurrentUser();
+});
 </script>

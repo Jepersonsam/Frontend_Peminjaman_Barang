@@ -180,57 +180,15 @@
       </div>
     </div>
 
-    <!-- Tombol ke Setting -->
-    <!-- <div class="mt-8">
-      <router-link
-        to="/setting"
-        class="mt-8 text-blue-600 hover:text-blue-800 transition-colors duration-200"
-      >
-        <svg
-          class="w-6 h-6"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M15 7a2 2 0 012 2v2a2 2 0 002 2h1a2 2 0 012 2v2a2 2 0 01-2 2h-6a2 2 0 01-2-2v-1H9v1a2 2 0 01-2 2H5a2 2 0 01-2-2v-2a2 2 0 012-2h1a2 2 0 002-2V9a2 2 0 012-2h4z"
-          />
-        </svg>
-      </router-link>
-    </div> -->
-
+    
     <!-- Dekoratif -->
     <div
       class="absolute top-10 left-10 w-20 h-20 bg-blue-100 rounded-full opacity-50 animate-pulse"
     ></div>
     <!-- Dekoratif Kanan Bawah dengan Ikon Kunci -->
     <div
-      class="absolute bottom-10 right-10 w-16 h-16 bg-green-100 rounded-full opacity-50 animate-pulse flex items-center justify-center group hover:opacity-80 transition"
-    >
-      <router-link
-        to="/setting"
-        class="text-green-800 hover:text-green-600 transition"
-        title="Atur Secret ID"
-      >
-        <svg
-          class="w-6 h-6"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M15 7a2 2 0 012 2v2a2 2 0 002 2h1a2 2 0 012 2v2a2 2 0 01-2 2h-6a2 2 0 01-2-2v-1H9v1a2 2 0 01-2 2H5a2 2 0 01-2-2v-2a2 2 0 012-2h1a2 2 0 002-2V9a2 2 0 012-2h4z"
-          />
-        </svg>
-      </router-link>
+      class="absolute bottom-10 right-10 w-16 h-16 bg-green-100 rounded-full opacity-50 animate-pulse flex items-center justify-center group hover:opacity-80 transition">
     </div>
-
     <div
       class="absolute top-1/2 left-5 w-12 h-12 bg-indigo-100 rounded-full opacity-30 animate-bounce"
     ></div>

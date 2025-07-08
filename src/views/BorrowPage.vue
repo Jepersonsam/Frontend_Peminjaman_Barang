@@ -69,6 +69,18 @@
               >
                 {{ user?.code || "-" }}
               </span>
+              <span class="text-sm text-gray-500">Email:</span>
+              <span
+                class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium"
+              >
+                {{ user?.email || "-" }}
+              </span>
+              <span class="text-sm text-gray-500">Phone:</span>
+              <span
+                class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full text-sm font-medium"
+              >
+                {{ user?.phone || "-" }}
+              </span>
             </div>
           </div>
         </div>
