@@ -13,7 +13,7 @@
     </div>
 
     <div
-      class="relative z-10 bg-white rounded-3xl shadow-2xl p-8 max-w-lg w-full text-center animate-fade-in border border-gray-100"
+      class="relative z-10 bg-white rounded-3xl shadow-2xl p-8 max-w-md sm:max-w-xl md:max-w-2xl w-full text-center animate-fade-in border border-gray-100"
     >
       <!-- Header Section -->
       <div class="mb-8">
@@ -78,20 +78,51 @@
       </div>
 
       <!-- Scanner Section -->
+
       <div class="mb-8">
         <div class="relative">
           <!-- Scanner Frame -->
           <div
             class="relative border-4 border-gradient-to-r from-blue-400 to-purple-500 rounded-2xl overflow-hidden shadow-2xl bg-gray-900"
           >
-            <qrcode-stream
-              @decode="onDecode"
-              @init="onInit"
-              class="w-full h-80 bg-black rounded-xl"
-            />
+            <!-- Kamera + Loading -->
+            <div class="relative w-full h-100 bg-black rounded-xl">
+              <qrcode-stream
+                @decode="onDecode"
+                @init="onInit"
+                class="absolute inset-0"
+              />
+
+              <!-- Loading Scanner (dalam frame kamera, bagian bawah) -->
+              <div
+                v-if="isScanning"
+                class="absolute bottom-7 left-1/2 transform -translate-x-1/2 w-[90%]"
+              >
+                <div
+                  class="backdrop-blur-lg bg-white border border-green-300 rounded-xl px-4 py-3 shadow-md flex items-center space-x-3"
+                >
+                  <svg
+                    class="w-6 h-6 text-green-400 animate-spin flex-shrink-0"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
+                    />
+                  </svg>
+                  <p class="text-sm text-green-800 font-medium">
+                    Memproses barcode...
+                  </p>
+                </div>
+              </div>
+            </div>
 
             <!-- Scanner Overlay -->
-            <div class="absolute inset-0 pointer-events-none">
+            <div class="absolute inset-0 pointer-events-none z-10">
               <!-- Corner Brackets -->
               <div
                 class="absolute top-4 left-4 w-6 h-6 border-l-4 border-t-4 border-white rounded-tl-lg animate-pulse"
@@ -186,6 +217,14 @@
         </div>
       </div>
 
+      <RouterLink :to="{ name: 'NFCScanner' }">
+        <button
+          class="px-6 py-3 rounded-xl bg-indigo-600 text-white shadow hover:bg-indigo-700 transition duration-300"
+        >
+          Tap ID Card (NFC)
+        </button>
+      </RouterLink>
+
       <!-- Error Message -->
       <div v-if="error" class="mb-6">
         <div
@@ -209,32 +248,6 @@
             </div>
             <div class="ml-3">
               <p class="text-red-800 font-medium">{{ error }}</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Success Indicator -->
-      <div v-if="isScanning" class="mb-6">
-        <div class="bg-green-50 border-l-4 border-green-400 rounded-xl p-4">
-          <div class="flex items-center">
-            <div class="flex-shrink-0">
-              <svg
-                class="w-6 h-6 text-green-400 animate-spin"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2"
-                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                />
-              </svg>
-            </div>
-            <div class="ml-3">
-              <p class="text-green-800 font-medium">Memproses barcode...</p>
             </div>
           </div>
         </div>
@@ -395,6 +408,7 @@ import { ref } from "vue";
 import { useRouter } from "vue-router";
 import { QrcodeStream } from "vue-qrcode-reader";
 import axios from "@/services/api";
+import { RouterLink } from "vue-router";
 
 const error = ref("");
 const isScanning = ref(false);
@@ -450,6 +464,8 @@ const handleCode = async (code) => {
 
     const res = await axios.get(`/users/by-code/${trimmedCode}`);
     if (res.data && res.data.data) {
+      localStorage.setItem("user_code", trimmedCode);
+
       showNotification(
         "success",
         "Berhasil!",

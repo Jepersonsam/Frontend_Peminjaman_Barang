@@ -24,7 +24,7 @@
       <h1 class="text-4xl font-bold text-gray-800 mb-4">
         Sistem Inventaris dan Peminjaman
       </h1>
-      <p class="text-lg text-gray-600 max-w-md">
+      <p class="text-lg text-gray-600">
         Silakan pilih aksi yang ingin Anda lakukan untuk mengelola barang
         inventaris
       </p>
@@ -57,7 +57,9 @@
                 ></path>
               </svg>
             </div>
-            <h3 class="text-2xl font-bold text-gray-800 mb-3">Peminjaman</h3>
+            <h3 class="text-2xl font-bold text-gray-800 mb-3">
+              Peminjaman Barang
+            </h3>
             <p class="text-gray-600 mb-6">
               Pinjam barang inventaris untuk keperluan Anda disini
             </p>
@@ -180,14 +182,15 @@
       </div>
     </div>
 
-    
     <!-- Dekoratif -->
     <div
       class="absolute top-10 left-10 w-20 h-20 bg-blue-100 rounded-full opacity-50 animate-pulse"
     ></div>
     <!-- Dekoratif Kanan Bawah dengan Ikon Kunci -->
     <div
-      class="absolute bottom-10 right-10 w-16 h-16 bg-green-100 rounded-full opacity-50 animate-pulse flex items-center justify-center group hover:opacity-80 transition">
+      class="absolute bottom-10 right-10 w-40 h-10 bg-white rounded-full opacity-500 animate-pulse flex items-center justify-center group hover:opacity-100 transition font-semibold text-red-600"
+    >
+      <button @click="goToScan">Keluar Dari Sistem</button>
     </div>
     <div
       class="absolute top-1/2 left-5 w-12 h-12 bg-indigo-100 rounded-full opacity-30 animate-bounce"
@@ -220,5 +223,10 @@ const goToReturn = () => {
 
 const goToRoomLoan = () => {
   router.push({ name: "RoomLoan", query: { code: userCode } });
+};
+
+const goToScan = () => {
+  localStorage.removeItem("user_code"); // Hapus user_code
+  router.push({ name: "Scan" }); // Arahkan ke halaman scan tanpa query
 };
 </script>

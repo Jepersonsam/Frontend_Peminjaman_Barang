@@ -52,23 +52,11 @@
           <label class="block font-semibold text-lg text-gray-700 mb-2"
             >Kontak</label
           >
-          <div class="relative">
-            <div
-              class="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none text-gray-500 text-lg"
-            >
-              +62
-            </div>
-            <input
-              v-model="form.borrower_contact_number"
-              type="tel"
-              inputmode="numeric"
-              pattern="[0-9]*"
-              maxlength="15"
-              placeholder="81234567890"
-              class="w-full pl-16 pr-5 py-4 border-2 border-gray-200 rounded-2xl bg-gray-50 text-lg"
-              required
-            />
-          </div>
+          <input
+            v-model="form.borrower_contact"
+            type="text"
+            class="w-full px-5 py-4 border-2 border-gray-200 rounded-2xl bg-gray-50"
+          />
         </div>
 
         <div>
@@ -98,16 +86,29 @@
           </select>
         </div>
 
-        <div>
-          <label class="block font-semibold text-lg text-gray-700 mb-2"
-            >Tanggal Peminjaman</label
+        <div class="relative">
+          <label class="block text-lg font-semibold text-gray-700 mb-2"
+            >Tanggal Pinjam</label
           >
           <input
-            v-model="selectedDate"
-            type="date"
-            class="w-full px-5 py-4 border-2 border-gray-200 rounded-2xl bg-gray-50"
-            required
+            id="borrowDate"
+            v-model="form.borrow_date"
+            type="text"
+            class="w-full border-2 border-gray-200 rounded-2xl px-6 py-4 pr-12 text-lg focus:ring-4 focus:ring-purple-500 focus:border-purple-500 bg-gray-50 hover:bg-white"
           />
+          <svg
+            class="w-5 h-5 absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-400 pointer-events-none"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
+            />
+          </svg>
         </div>
 
         <div class="grid md:grid-cols-2 gap-6">
@@ -147,46 +148,30 @@
           />
         </div>
 
-        <div v-if="bookings.length > 0" class="mt-6">
-          <h3 class="font-semibold text-lg text-gray-800 mb-2">
-            Daftar Booking di Tanggal Ini:
-          </h3>
-          <div class="space-y-4">
-            <div
-              v-for="(booking, index) in bookings"
-              :key="index"
-              class="p-4 rounded-xl border bg-gray-50 shadow-sm"
-            >
-              <div class="text-sm font-semibold text-gray-700">
-                {{ booking.borrower_name }}
+        <div v-if="form.room_id" class="mt-6">
+          <div>
+            <h1 class="text-lg font-semibold text-gray-800 mb-2">Noted:</h1>
+            <ol class="space-y-2 text-xl-1">
+              <li class="flex items-center space-x-2">
                 <span
-                  class="text-xs italic text-gray-500"
-                  v-if="booking.purpose"
-                  >({{ booking.purpose }})</span
-                >
-              </div>
-              <div class="text-xs text-gray-600">
-                {{ formatDate(booking.start_time) }} —
-                <strong>{{ formatTime(booking.start_time) }}</strong> -
-                <strong>{{ formatTime(booking.end_time) }}</strong
-                ><br />
-                Status:
+                  class="w-3 h-3 bg-yellow-400 rounded-full inline-block"
+                ></span>
+                <span class="text-gray-700">Menunggu Persetujuan</span>
+              </li>
+              <li class="flex items-center space-x-2">
                 <span
-                  :class="{
-                    'text-green-600 font-bold': booking.status === 'approved',
-                    'text-yellow-600 font-bold': booking.status === 'pending',
-                    'text-red-600 font-bold': booking.status === 'rejected',
-                    'text-gray-500 italic': booking.status === 'cancelled',
-                  }"
-                >
-                  {{ translateStatus(booking.status) }}
-                </span>
-              </div>
-            </div>
+                  class="w-3 h-3 bg-green-500 rounded-full inline-block"
+                ></span>
+                <span class="text-gray-700">Disetujui</span>
+              </li>
+            </ol>
           </div>
+          <h3 class="font-semibold text-lg text-gray-800 mb-2 mt-6">
+            Jadwal Ruangan:
+          </h3>
+          <FullCalendar :options="calendarOptions" />
         </div>
-
-        <div class="text-center pt-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-4">
           <button
             type="submit"
             class="bg-blue-600 hover:bg-blue-700 text-white text-lg font-semibold px-10 py-4 rounded-2xl shadow-lg transition-all duration-300"
@@ -196,80 +181,31 @@
           <button
             type="button"
             @click="goBack"
-            class="bg-gray-300 hover:bg-gray-400 text-gray-800 text-lg font-semibold px-20 py-4 rounded-2xl shadow-md transition-all duration-300"
+            class="bg-gray-300 hover:bg-gray-400 text-gray-800 text-lg font-semibold px-10 py-4 rounded-2xl shadow-md transition-all duration-300"
           >
             Kembali
           </button>
         </div>
       </form>
-      <!-- Modal Notifikasi -->
-      <div
-        v-if="showModal"
-        class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50"
-      >
-        <div
-          class="bg-white p-8 rounded-3xl shadow-2xl max-w-md w-full text-center border border-gray-200"
-        >
-          <div
-            class="flex items-center justify-center w-16 h-16 mx-auto mb-4 rounded-full"
-            :class="{
-              'bg-green-100': modalType === 'success',
-              'bg-yellow-100': modalType === 'warning',
-              'bg-red-100': modalType === 'error',
-            }"
-          >
-            <svg
-              class="w-8 h-8"
-              :class="{
-                'text-green-600': modalType === 'success',
-                'text-yellow-600': modalType === 'warning',
-                'text-red-600': modalType === 'error',
-              }"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                :d="
-                  {
-                    success: 'M5 13l4 4L19 7',
-                    warning:
-                      'M12 8v4m0 4h.01M12 2a10 10 0 100 20 10 10 0 000-20z',
-                    error: 'M6 18L18 6M6 6l12 12',
-                  }[modalType]
-                "
-              />
-            </svg>
-          </div>
-          <h2 class="text-2xl font-bold text-gray-800 mb-2">
-            {{ modalTitle }}
-          </h2>
-          <p class="text-gray-600 mb-6">{{ modalMessage }}</p>
-          <div class="flex justify-center">
-            <button
-              @click="closeModal"
-              class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-xl font-semibold shadow"
-            >
-              Tutup
-            </button>
-          </div>
-        </div>
-      </div>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, watch, onMounted } from "vue";
+import { ref, watch, onMounted, computed } from "vue";
 import axios from "@/services/api";
-import { useRouter, useRoute } from "vue-router";
+import { useRouter } from "vue-router";
+import flatpickr from "flatpickr";
+import Swal from "sweetalert2";
+import "flatpickr/dist/flatpickr.min.css";
+import "sweetalert2/dist/sweetalert2.min.css";
 
-const route = useRoute();
+import FullCalendar from "@fullcalendar/vue3";
+import dayGridPlugin from "@fullcalendar/daygrid";
+import timeGridPlugin from "@fullcalendar/timegrid";
+import interactionPlugin from "@fullcalendar/interaction";
+
 const router = useRouter();
-
 const rooms = ref([]);
 const bookings = ref([]);
 const selectedDate = ref("");
@@ -277,9 +213,9 @@ const selectedDate = ref("");
 const form = ref({
   room_id: "",
   borrower_name: "",
-  borrower_contact_number: "", // hanya angka setelah +62
-  borrower_contact: "", // hasil gabungan akhir (untuk disubmit)
+  borrower_contact: "",
   purpose: "",
+  borrow_date: "",
   start_time: "",
   end_time: "",
   start_time_only: "",
@@ -288,21 +224,22 @@ const form = ref({
   status: "pending",
 });
 
-// Modal state
-const showModal = ref(false);
-const modalType = ref("success"); // 'success', 'error', 'warning'
-const modalTitle = ref("");
-const modalMessage = ref("");
+const userCode =
+  router.currentRoute.value.query.code || localStorage.getItem("user_code");
 
-const showCustomModal = (type, title, message) => {
-  modalType.value = type;
-  modalTitle.value = title;
-  modalMessage.value = message;
-  showModal.value = true;
-};
+const user = ref({});
 
-const closeModal = () => {
-  showModal.value = false;
+const getUser = async () => {
+  if (!userCode) return;
+  try {
+    const res = await axios.get(`/users/by-code/${userCode}`);
+    user.value = res.data.data;
+    form.value.borrower_name = user.value.name;
+    form.value.borrower_contact = user.value.phone || user.value.contact;
+    form.value.emails = user.value.email;
+  } catch (err) {
+    console.error("Gagal mengambil user:", err);
+  }
 };
 
 const getRooms = async () => {
@@ -310,92 +247,74 @@ const getRooms = async () => {
     const res = await axios.get("/rooms");
     rooms.value = res.data;
   } catch (err) {
-    showCustomModal("error", "Gagal Memuat", "Gagal mengambil data ruangan.");
+    Swal.fire("Gagal!", "Gagal mengambil data ruangan", "error");
     console.error(err);
   }
 };
 
-const audioSuccess = new Audio("/sounds/success-beep.mp3");
-const playBeep = () => {
-  try {
-    audioSuccess.play();
-  } catch (e) {
-    console.warn("Gagal memutar audio:", e);
-  }
-};
-
-const getCurrentUser = async () => {
-  const code = route.query.code;
-  if (!code) return;
-  try {
-    const res = await axios.get(`/users/by-code/${code}`);
-    const user = res.data.data;
-    form.value.borrower_name = user.name;
-    form.value.borrower_contact_number =
-      user.phone?.replace(/^(\+62)/, "") ?? "";
-    form.value.emails = user.email;
-  } catch (err) {
-    console.error("Gagal mengambil data user dari code", err);
-  }
-};
-
-const isValidMultipleEmails = (emails) => {
-  return emails
-    .split(",")
-    .map((e) => e.trim())
-    .every((email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email));
-};
-
 const checkRoomAvailability = async () => {
-  if (!form.value.room_id || !selectedDate.value) return;
+  if (!form.value.room_id) {
+    bookings.value = [];
+    return;
+  }
+
+  const dateToCheck =
+    selectedDate.value || new Date().toISOString().slice(0, 10);
+
   try {
     const res = await axios.get("/room-loans/check-availability", {
       params: {
         room_id: form.value.room_id,
-        date: selectedDate.value,
+        date: dateToCheck,
       },
     });
     bookings.value = res.data;
   } catch (err) {
-    console.error("❌ Gagal cek ketersediaan ruangan", err);
+    console.error("Gagal cek ketersediaan ruangan", err);
   }
 };
 
 const handleSubmit = async () => {
+  if (!form.value.borrow_date) {
+    Swal.fire(
+      "Perhatian",
+      "Mohon pilih tanggal pinjam terlebih dahulu.",
+      "warning"
+    );
+    return;
+  }
+
+  if (form.value.start_time_only >= form.value.end_time_only) {
+    Swal.fire(
+      "Perhatian",
+      "Waktu mulai harus sebelum waktu selesai.",
+      "warning"
+    );
+    return;
+  }
+
   form.value.start_time = `${selectedDate.value}T${form.value.start_time_only}`;
   form.value.end_time = `${selectedDate.value}T${form.value.end_time_only}`;
-  form.value.borrower_contact = "+62" + form.value.borrower_contact_number;
 
-  if (form.value.emails) {
-    const emailsArray = form.value.emails
+  // Ubah string email jadi array
+  if (form.value.emails && typeof form.value.emails === "string") {
+    form.value.emails = form.value.emails
       .split(",")
-      .map((e) => e.trim())
-      .filter((e) => e !== "");
-
-    if (!emailsArray.every((email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email))) {
-      showCustomModal(
-        "warning",
-        "Format Email Tidak Valid",
-        "Pastikan email dipisahkan dengan koma dan sesuai format."
-      );
-      return;
-    }
-
-    form.value.emails = emailsArray;
-    form.value.attendees = emailsArray.map((email) => ({ email }));
+      .map((email) => email.trim())
+      .filter((email) => email !== "");
   }
 
   try {
     await axios.post("/room-loans", form.value);
-    showCustomModal("success", "Peminjaman Berhasil", "Ruangan berhasil diajukan!");
-    playBeep(); // ✅ mainkan suara notifikasi
+    await Swal.fire("Sukses!", "Peminjaman berhasil diajukan!", "success");
 
-    // ✅ Reset form setelah berhasil
+    // Reset
     form.value = {
       room_id: "",
       borrower_name: "",
       borrower_contact: "",
       purpose: "",
+      borrow_date: "",
       start_time: "",
       end_time: "",
       start_time_only: "",
@@ -403,73 +322,140 @@ const handleSubmit = async () => {
       emails: "",
       status: "pending",
     };
-    bookings.value = [];
     selectedDate.value = "";
+    bookings.value = [];
   } catch (err) {
-    if (err.response && err.response.status === 409) {
-      showCustomModal(
-        "warning",
-        "Waktu Bentrok",
-        "Ruangan sudah dibooking di waktu tersebut!"
+    if (err.response?.status === 409) {
+      Swal.fire(
+        "Gagal!",
+        "Ruangan sudah dibooking di waktu tersebut!",
+        "error"
       );
     } else {
-      showCustomModal(
-        "error",
-        "Terjadi Kesalahan",
-        "Gagal mengajukan peminjaman. Silakan coba lagi."
-      );
+      Swal.fire("Terjadi Kesalahan", "Gagal mengajukan peminjaman.", "error");
       console.error(err);
     }
   }
 };
 
-const formatDate = (dt) => {
-  const date = new Date(dt);
-  return date.toLocaleDateString("id-ID", {
-    weekday: "short",
-    day: "numeric",
-    month: "long",
-    year: "numeric",
-  });
-};
+const calendarOptions = ref({
+  plugins: [dayGridPlugin, timeGridPlugin, interactionPlugin],
+  initialView: "timeGridWeek",
+  headerToolbar: {
+    left: "prev,next today",
+    center: "title",
+    right: "dayGridMonth,timeGridWeek,timeGridDay",
+  },
+  initialDate: new Date().toISOString().slice(0, 10),
+  events: computed(() =>
+    bookings.value.map((booking) => ({
+      title: `${booking.borrower_name}${
+        booking.purpose ? ` (${booking.purpose})` : ""
+      }`,
+      start: booking.start_time,
+      end: booking.end_time,
+      color: getStatusColor(booking.status),
+      extendedProps: {
+        status: booking.status,
+        borrower_contact: booking.borrower_contact,
+      },
+    }))
+  ),
+  slotDuration: "00:30:00",
+  slotMinTime: "07:00:00",
+  slotMaxTime: "20:00:00",
+  displayEventTime: true,
+  allDaySlot: false,
+  locale: "id",
+  eventClick: (info) => {
+    Swal.fire({
+      title: "Detail Booking",
+      html: `
+        <strong>Nama:</strong> ${info.event.title}<br/>
+        <strong>Status:</strong> ${info.event.extendedProps.status}<br/>
+        <strong>Kontak:</strong> ${
+          info.event.extendedProps.borrower_contact || "N/A"
+        }
+      `,
+      icon: "info",
+    });
+  },
+  selectable: true,
+  selectMirror: true,
+  selectOverlap: false,
+  select: (info) => {
+    const start = info.start;
+    const end = info.end;
 
-const formatTime = (dt) => {
-  const date = new Date(dt);
-  return date.toLocaleTimeString("id-ID", {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-};
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    if (start < today) {
+      Swal.fire(
+        "Tidak Valid",
+        "Tidak bisa memilih hari yang sudah lewat.",
+        "warning"
+      );
+      info.view.calendar.unselect();
+      return;
+    }
 
-const translateStatus = (status) => {
-  switch (status) {
-    case "approved":
-      return "Disetujui";
-    case "pending":
-      return "Menunggu Persetujuan";
-    case "rejected":
-      return "Ditolak";
-    case "cancelled":
-      return "Dibatalkan";
-    default:
-      return status;
-  }
-};
+    if (start >= end) {
+      Swal.fire(
+        "Tidak Valid",
+        "Waktu selesai harus setelah waktu mulai",
+        "warning"
+      );
+      info.view.calendar.unselect();
+      return;
+    }
 
-watch([() => form.value.room_id, selectedDate], ([roomId, date]) => {
-  if (roomId && date) {
-    checkRoomAvailability();
-  } else {
-    bookings.value = [];
-  }
+    selectedDate.value = start.toISOString().slice(0, 10);
+
+    const day = String(start.getDate()).padStart(2, "0");
+    const month = String(start.getMonth() + 1).padStart(2, "0");
+    const year = start.getFullYear();
+    form.value.borrow_date = `${day}-${month}-${year}`;
+
+    form.value.start_time_only = start.toTimeString().slice(0, 5);
+    form.value.end_time_only = end.toTimeString().slice(0, 5);
+  },
 });
 
-const goBack = () => {
-  router.push("/");
+const getStatusColor = (status) => {
+  const colors = {
+    approved: "#10B981",
+    pending: "#F59E0B",
+    rejected: "#EF4444",
+    cancelled: "#6B7280",
+  };
+  return colors[status] || "#3B82F6";
 };
 
+watch([() => form.value.room_id, selectedDate], checkRoomAvailability);
+
+const goBack = () => router.push("/choose-action");
+
 onMounted(() => {
+  if (!userCode) {
+    Swal.fire(
+      "QR Belum Dipindai",
+      "Silakan scan QR Code terlebih dahulu.",
+      "warning"
+    );
+    router.push({ name: "ScanPage" });
+    return;
+  }
   getRooms();
-  getCurrentUser();
+  getUser();
+  flatpickr("#borrowDate", {
+    dateFormat: "d-m-Y",
+    minDate: "today",
+    onChange: (selectedDates, dateStr) => {
+      if (selectedDates.length) {
+        form.value.borrow_date = dateStr;
+        selectedDate.value = selectedDates[0].toISOString().slice(0, 10);
+      }
+    },
+  });
 });
 </script>
