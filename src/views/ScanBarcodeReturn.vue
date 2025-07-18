@@ -346,13 +346,21 @@ const handleReturn = async (code) => {
       serial_code: code.trim(),
     });
 
-    isScanning.value = false;
-    returnedItemName.value = res.data.data.name;
-    showSuccessModal.value = true;
-    manualCode.value = "";
-    playBeep();
+    const itemName =
+      res.data?.data?.borrowing?.item?.name ?? res.data?.data?.item?.name;
+
+    if (itemName) {
+      returnedItemName.value = itemName;
+      showSuccessModal.value = true;
+      playBeep();
+    } else {
+      showNotification(
+        "error",
+        "Data Tidak Lengkap",
+        "Response dari server tidak memuat nama barang."
+      );
+    }
   } catch (err) {
-    isScanning.value = false;
     if (err.response?.status === 404) {
       showNotification(
         "error",
@@ -372,7 +380,9 @@ const handleReturn = async (code) => {
         "Terjadi kesalahan. Silakan coba lagi."
       );
     }
-    console.error(err);
+    console.error("Gagal mengembalikan barang:", err);
+  } finally {
+    isScanning.value = false;
   }
 };
 
@@ -383,7 +393,7 @@ const onInit = (promise) => {
       "Kamera Tidak Aktif",
       "Pastikan izin kamera sudah diberikan."
     );
-    console.error(err);
+    console.error("Init scanner gagal:", err);
   });
 };
 </script>

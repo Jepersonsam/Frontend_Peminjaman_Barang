@@ -1,7 +1,32 @@
 <template>
   <div
-    class="min-h-screen bg-gradient-to-br from-blue-500 via-white to-indigo-500 flex flex-col items-center justify-center p-6"
+    class="min-h-screen bg-gradient-to-br from-blue-500 via-white to-indigo-500 flex flex-col items-center justify-center p-6 relative"
   >
+    <!-- Tombol Logout di kanan atas -->
+    <div
+      class="absolute top-4 right-1 z-50 flex items-center gap-2 px-3 py-5 bg-white rounded-full shadow-md border border-gray-200 hover:bg-gray-50 transition"
+    >
+      <svg
+        class="w-4 h-4 text-red-600"
+        fill="none"
+        stroke="currentColor"
+        viewBox="0 0 24 24"
+      >
+        <path
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          stroke-width="2"
+          d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a2 2 0 01-2 2H7a2 2 0 01-2-2V7a2 2 0 012-2h6a2 2 0 012 2v1"
+        />
+      </svg>
+      <button
+        @click="goToScan"
+        class="text-sm text-red-600 font-medium hover:text-red-700 focus:outline-none"
+      >
+        Keluar Dari Sistem
+      </button>
+    </div>
+
     <!-- Header -->
     <div class="text-center mb-12">
       <div
@@ -18,7 +43,7 @@
             stroke-linejoin="round"
             stroke-width="2"
             d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
-          ></path>
+          />
         </svg>
       </div>
       <h1 class="text-4xl font-bold text-gray-800 mb-4">
@@ -32,7 +57,6 @@
 
     <!-- Action Cards -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-8 w-full max-w-4xl">
-      <!-- Hanya tampil jika punya secret ID -->
       <template v-if="hasSecret">
         <!-- Peminjaman -->
         <div class="group">
@@ -54,7 +78,7 @@
                   stroke-linejoin="round"
                   stroke-width="2"
                   d="M12 4v16m8-8H4"
-                ></path>
+                />
               </svg>
             </div>
             <h3 class="text-2xl font-bold text-gray-800 mb-3">
@@ -78,7 +102,7 @@
                   stroke-linejoin="round"
                   stroke-width="2"
                   d="M9 5l7 7-7 7"
-                ></path>
+                />
               </svg>
             </div>
           </button>
@@ -104,7 +128,7 @@
                   stroke-linejoin="round"
                   stroke-width="2"
                   d="M3 10h10a8 8 0 018 8v2M3 10l6 6m-6-6l6-6"
-                ></path>
+                />
               </svg>
             </div>
             <h3 class="text-2xl font-bold text-gray-800 mb-3">Pengembalian</h3>
@@ -126,15 +150,15 @@
                   stroke-linejoin="round"
                   stroke-width="2"
                   d="M9 5l7 7-7 7"
-                ></path>
+                />
               </svg>
             </div>
           </button>
         </div>
       </template>
 
-      <!-- Peminjaman Ruangan (selalu muncul) -->
-      <div class="group col-span-1 md:col-span-2">
+      <!-- Peminjaman Ruangan -->
+      <div class="group col-span-1 md:col-span-1">
         <button
           @click="goToRoomLoan"
           class="w-full bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-gray-100 p-8 text-center group-hover:border-blue-200"
@@ -153,7 +177,7 @@
                 stroke-linejoin="round"
                 stroke-width="2"
                 d="M12 4v16m8-8H4"
-              ></path>
+              />
             </svg>
           </div>
           <h3 class="text-2xl font-bold text-gray-800 mb-3">
@@ -175,7 +199,54 @@
                 stroke-linejoin="round"
                 stroke-width="2"
                 d="M9 5l7 7-7 7"
-              ></path>
+              />
+            </svg>
+          </div>
+        </button>
+      </div>
+
+      <div class="group col-span-1 md:col-span-1">
+        <button
+          @click="goToAcceptBorrow"
+          class="w-full bg-white rounded-2xl shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 border border-gray-100 p-8 text-center group-hover:border-blue-200"
+        >
+          <div
+            class="inline-flex items-center justify-center w-16 h-16 bg-blue-500 rounded-full mb-6 group-hover:bg-blue-600 transition-colors duration-300"
+          >
+            <svg
+              class="w-8 h-8 text-white"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M12 4v16m8-8H4"
+              />
+            </svg>
+          </div>
+          <h3 class="text-2xl font-bold text-gray-800 mb-3">
+            Persetujuan Peminjaman Barang
+          </h3>
+          <p class="text-gray-600 mb-6">Cek Persetujuan Peminjaman Barang Anda</p>
+          <div
+            class="flex items-center justify-center text-blue-500 font-medium"
+          >
+            <span class="mr-2">Lihat Persetujuan</span>
+            <svg
+              class="w-4 h-4 transform group-hover:translate-x-1 transition-transform duration-300"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M9 5l7 7-7 7"
+              />
             </svg>
           </div>
         </button>
@@ -186,12 +257,6 @@
     <div
       class="absolute top-10 left-10 w-20 h-20 bg-blue-100 rounded-full opacity-50 animate-pulse"
     ></div>
-    <!-- Dekoratif Kanan Bawah dengan Ikon Kunci -->
-    <div
-      class="absolute bottom-10 right-10 w-40 h-10 bg-white rounded-full opacity-500 animate-pulse flex items-center justify-center group hover:opacity-100 transition font-semibold text-red-600"
-    >
-      <button @click="goToScan">Keluar Dari Sistem</button>
-    </div>
     <div
       class="absolute top-1/2 left-5 w-12 h-12 bg-indigo-100 rounded-full opacity-30 animate-bounce"
     ></div>
@@ -225,8 +290,13 @@ const goToRoomLoan = () => {
   router.push({ name: "RoomLoan", query: { code: userCode } });
 };
 
+const goToAcceptBorrow = () => {
+  router.push({ name: "AcceptBorrow", query: { code: userCode } });
+};
+
 const goToScan = () => {
-  localStorage.removeItem("user_code"); // Hapus user_code
-  router.push({ name: "Scan" }); // Arahkan ke halaman scan tanpa query
+  localStorage.removeItem("user_code"); // Hapus kode dari barcode
+  localStorage.removeItem("user_code_nfc"); // Hapus kode dari NFC
+  router.push({ name: "Scan" }); // Redirect ke halaman scan
 };
 </script>

@@ -208,6 +208,7 @@ import interactionPlugin from "@fullcalendar/interaction";
 const router = useRouter();
 const rooms = ref([]);
 const bookings = ref([]);
+const weeklyBookings = ref([]);
 const selectedDate = ref("");
 
 const form = ref({
@@ -224,16 +225,23 @@ const form = ref({
   status: "pending",
 });
 
-const userCode =
-  router.currentRoute.value.query.code || localStorage.getItem("user_code");
+const codeFromQuery = router.currentRoute.value.query.code?.trim();
+const codeFromBarcode = localStorage.getItem("user_code");
+const codeFromNFC = localStorage.getItem("user_code_nfc");
 
+const userCode = codeFromQuery || codeFromBarcode || codeFromNFC;
 const user = ref({});
 
+// ✅ Ambil user info
 const getUser = async () => {
   if (!userCode) return;
   try {
-    const res = await axios.get(`/users/by-code/${userCode}`);
+    let endpoint = `/users/by-code/${userCode}`;
+    if (userCode === codeFromNFC) endpoint = `/users/by-nfc/${userCode}`;
+
+    const res = await axios.get(endpoint);
     user.value = res.data.data;
+
     form.value.borrower_name = user.value.name;
     form.value.borrower_contact = user.value.phone || user.value.contact;
     form.value.emails = user.value.email;
@@ -242,102 +250,51 @@ const getUser = async () => {
   }
 };
 
+// ✅ Ambil daftar ruangan
 const getRooms = async () => {
   try {
     const res = await axios.get("/rooms");
     rooms.value = res.data;
   } catch (err) {
     Swal.fire("Gagal!", "Gagal mengambil data ruangan", "error");
-    console.error(err);
   }
 };
 
+// ✅ Ambil peminjaman harian
 const checkRoomAvailability = async () => {
   if (!form.value.room_id) {
     bookings.value = [];
+    weeklyBookings.value = [];
     return;
   }
-
   const dateToCheck =
     selectedDate.value || new Date().toISOString().slice(0, 10);
 
   try {
     const res = await axios.get("/room-loans/check-availability", {
-      params: {
-        room_id: form.value.room_id,
-        date: dateToCheck,
-      },
+      params: { room_id: form.value.room_id, date: dateToCheck },
     });
     bookings.value = res.data;
+
+    await getWeeklyBookings(form.value.room_id);
   } catch (err) {
     console.error("Gagal cek ketersediaan ruangan", err);
   }
 };
 
-const handleSubmit = async () => {
-  if (!form.value.borrow_date) {
-    Swal.fire(
-      "Perhatian",
-      "Mohon pilih tanggal pinjam terlebih dahulu.",
-      "warning"
-    );
-    return;
-  }
-
-  if (form.value.start_time_only >= form.value.end_time_only) {
-    Swal.fire(
-      "Perhatian",
-      "Waktu mulai harus sebelum waktu selesai.",
-      "warning"
-    );
-    return;
-  }
-
-  form.value.start_time = `${selectedDate.value}T${form.value.start_time_only}`;
-  form.value.end_time = `${selectedDate.value}T${form.value.end_time_only}`;
-
-  // Ubah string email jadi array
-  if (form.value.emails && typeof form.value.emails === "string") {
-    form.value.emails = form.value.emails
-      .split(",")
-      .map((email) => email.trim())
-      .filter((email) => email !== "");
-  }
-
+// ✅ Ambil peminjaman mingguan
+const getWeeklyBookings = async (roomId) => {
   try {
-    await axios.post("/room-loans", form.value);
-    await Swal.fire("Sukses!", "Peminjaman berhasil diajukan!", "success");
-
-    // Reset
-    form.value = {
-      room_id: "",
-      borrower_name: "",
-      borrower_contact: "",
-      purpose: "",
-      borrow_date: "",
-      start_time: "",
-      end_time: "",
-      start_time_only: "",
-      end_time_only: "",
-      emails: "",
-      status: "pending",
-    };
-    selectedDate.value = "";
-    bookings.value = [];
+    const res = await axios.get(`/weekly-room-loans/by-room`, {
+      params: { room_id: roomId },
+    });
+    weeklyBookings.value = res.data;
   } catch (err) {
-    if (err.response?.status === 409) {
-      Swal.fire(
-        "Gagal!",
-        "Ruangan sudah dibooking di waktu tersebut!",
-        "error"
-      );
-    } else {
-      Swal.fire("Terjadi Kesalahan", "Gagal mengajukan peminjaman.", "error");
-      console.error(err);
-    }
+    console.error("Gagal mengambil booking mingguan", err);
   }
 };
 
+// ✅ Event untuk FullCalendar
 const calendarOptions = ref({
   plugins: [dayGridPlugin, timeGridPlugin, interactionPlugin],
   initialView: "timeGridWeek",
@@ -347,79 +304,194 @@ const calendarOptions = ref({
     right: "dayGridMonth,timeGridWeek,timeGridDay",
   },
   initialDate: new Date().toISOString().slice(0, 10),
-  events: computed(() =>
-    bookings.value.map((booking) => ({
+  events: computed(() => {
+    const dailyEvents = bookings.value.map((booking) => ({
       title: `${booking.borrower_name}${
         booking.purpose ? ` (${booking.purpose})` : ""
       }`,
       start: booking.start_time,
       end: booking.end_time,
       color: getStatusColor(booking.status),
-      extendedProps: {
-        status: booking.status,
-        borrower_contact: booking.borrower_contact,
-      },
-    }))
-  ),
+      extendedProps: { type: "daily", data: booking },
+    }));
+
+    const weeklyEvents = weeklyBookings.value.map((booking) => ({
+      title: `${booking.borrower_name}${
+        booking.purpose ? ` (${booking.purpose})` : ""
+      }`,
+      daysOfWeek: [booking.day_of_week],
+      startTime: booking.start_time,
+      endTime: booking.end_time,
+      startRecur: booking.start_date,
+      endRecur: booking.end_date,
+      color: getStatusColor(booking.status),
+      extendedProps: { type: "weekly", data: booking },
+    }));
+
+    return [...dailyEvents, ...weeklyEvents];
+  }),
   slotDuration: "00:30:00",
   slotMinTime: "07:00:00",
   slotMaxTime: "20:00:00",
-  displayEventTime: true,
   allDaySlot: false,
   locale: "id",
-  eventClick: (info) => {
-    Swal.fire({
-      title: "Detail Booking",
-      html: `
-        <strong>Nama:</strong> ${info.event.title}<br/>
-        <strong>Status:</strong> ${info.event.extendedProps.status}<br/>
-        <strong>Kontak:</strong> ${
-          info.event.extendedProps.borrower_contact || "N/A"
-        }
-      `,
-      icon: "info",
-    });
-  },
   selectable: true,
   selectMirror: true,
   selectOverlap: false,
+
+  // ✅ Pilih tanggal & jam → isi form otomatis
   select: (info) => {
-    const start = info.start;
-    const end = info.end;
-
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    if (start < today) {
-      Swal.fire(
-        "Tidak Valid",
-        "Tidak bisa memilih hari yang sudah lewat.",
-        "warning"
-      );
-      info.view.calendar.unselect();
-      return;
-    }
-
-    if (start >= end) {
-      Swal.fire(
-        "Tidak Valid",
-        "Waktu selesai harus setelah waktu mulai",
-        "warning"
-      );
-      info.view.calendar.unselect();
-      return;
-    }
-
-    selectedDate.value = start.toISOString().slice(0, 10);
+    const start = new Date(info.start);
+    const end = new Date(info.end);
 
     const day = String(start.getDate()).padStart(2, "0");
     const month = String(start.getMonth() + 1).padStart(2, "0");
     const year = start.getFullYear();
-    form.value.borrow_date = `${day}-${month}-${year}`;
+    const formattedDate = `${day}-${month}-${year}`;
 
-    form.value.start_time_only = start.toTimeString().slice(0, 5);
-    form.value.end_time_only = end.toTimeString().slice(0, 5);
+    const startTime = start.toTimeString().slice(0, 5);
+    const endTime = end.toTimeString().slice(0, 5);
+
+    form.value.borrow_date = formattedDate;
+    form.value.start_time_only = startTime;
+    form.value.end_time_only = endTime;
+
+    // ✅ Tambahkan event sementara ke calendar
+    info.view.calendar.addEvent({
+      title: `Dipilih (${startTime}-${endTime})`,
+      start: info.start,
+      end: info.end,
+      color: "#3B82F6", // biru
+      className: "selected-slot",
+    });
+
+    Swal.fire({
+      title: "Waktu Dipilih",
+      html: `
+      <p><strong>Tanggal:</strong> ${formattedDate}</p>
+      <p><strong>Jam:</strong> ${startTime} - ${endTime}</p>
+    `,
+      icon: "success",
+      confirmButtonText: "OK",
+      confirmButtonColor: "#2563EB",
+    });
+  },
+
+  // ✅ Klik event → tampilkan detail
+  eventClick: (info) => {
+    const booking = info.event.extendedProps.data;
+    const type = info.event.extendedProps.type;
+
+    let detailHtml = `
+      <div style="text-align: left; font-size: 16px;">
+        <p><strong>Peminjam:</strong> ${booking.borrower_name}</p>
+        <p><strong>Kontak:</strong> ${booking.borrower_contact || "-"}</p>
+        <p><strong>Keperluan:</strong> ${booking.purpose || "-"}</p>
+    `;
+
+    if (type === "daily") {
+      detailHtml += `
+        <p><strong>Tanggal:</strong> ${new Date(
+          booking.start_time
+        ).toLocaleDateString("id-ID")}</p>
+        <p><strong>Jam:</strong> ${booking.start_time
+          .split("T")[1]
+          .slice(0, 5)} - ${booking.end_time.split("T")[1].slice(0, 5)}</p>
+      `;
+    }
+
+    if (type === "weekly") {
+      detailHtml += `
+        <p><strong>Hari:</strong> ${
+          ["Minggu", "Senin", "Selasa", "Rabu", "Kamis", "Jumat", "Sabtu"][
+            booking.day_of_week
+          ]
+        }</p>
+        <p><strong>Jam:</strong> ${booking.start_time.slice(
+          0,
+          5
+        )} - ${booking.end_time.slice(0, 5)}</p>
+        <p><strong>Berlaku:</strong> ${booking.start_date} s/d ${
+        booking.end_date
+      }</p>
+      `;
+    }
+
+    detailHtml += `<p><strong>Status:</strong> ${booking.status}</p></div>`;
+
+    Swal.fire({
+      title: "Detail Peminjaman",
+      html: detailHtml,
+      icon: "info",
+      confirmButtonText: "Tutup",
+      confirmButtonColor: "#2563EB",
+      customClass: {
+        popup: "rounded-xl shadow-lg",
+        title: "text-xl font-bold mb-4",
+        htmlContainer: "text-left",
+      },
+    });
   },
 });
+
+const handleSubmit = async () => {
+  try {
+    // Gabungkan tanggal & waktu menjadi ISO format
+    const [day, month, year] = form.value.borrow_date.split("-");
+    const startDateTime = `${year}-${month}-${day}T${form.value.start_time_only}:00`;
+    const endDateTime = `${year}-${month}-${day}T${form.value.end_time_only}:00`;
+
+    const payload = {
+      room_id: form.value.room_id,
+      borrower_name: form.value.borrower_name,
+      borrower_contact: form.value.borrower_contact,
+      purpose: form.value.purpose,
+      start_time: startDateTime,
+      end_time: endDateTime,
+      emails: form.value.emails
+        ? form.value.emails.split(",").map((email) => email.trim())
+        : [],
+      status: "pending",
+    };
+
+    const res = await axios.post("/room-loans", payload);
+
+    Swal.fire({
+      title: "Berhasil!",
+      text: "Peminjaman berhasil diajukan.",
+      icon: "success",
+      confirmButtonText: "OK",
+    });
+
+    // Reset form setelah sukses
+    form.value = {
+      room_id: "",
+      borrower_name: user.value.name,
+      borrower_contact: user.value.phone || "",
+      purpose: "",
+      borrow_date: "",
+      start_time_only: "",
+      end_time_only: "",
+      emails: user.value.email,
+      status: "pending",
+    };
+  } catch (err) {
+    if (err.response && err.response.status === 409) {
+      Swal.fire({
+        title: "Gagal!",
+        text: err.response.data.message || "Ruangan sudah dibooking.",
+        icon: "error",
+      });
+    } else {
+      Swal.fire({
+        title: "Error!",
+        text: "Terjadi kesalahan saat mengajukan peminjaman.",
+        icon: "error",
+      });
+      console.error(err);
+    }
+  }
+};
 
 const getStatusColor = (status) => {
   const colors = {

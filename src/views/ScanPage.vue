@@ -512,12 +512,6 @@ const handleCode = async (code) => {
   }
 };
 
-const handleManualSubmit = async () => {
-  await handleCode(manualCode.value);
-  showManualInput.value = false;
-  manualCode.value = "";
-};
-
 const onInit = (promise) => {
   promise.catch((err) => {
     console.error(err);

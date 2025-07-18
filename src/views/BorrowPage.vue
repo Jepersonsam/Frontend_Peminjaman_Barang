@@ -21,9 +21,12 @@
       <div
         class="bg-white shadow-xl rounded-3xl p-6 mb-8 border border-gray-100"
       >
-        <div class="flex items-center space-x-4">
+        <div
+          class="flex flex-col sm:flex-row sm:items-center sm:justify-start gap-4"
+        >
+          <!-- Avatar -->
           <div
-            class="bg-gradient-to-r from-green-400 to-blue-500 p-3 rounded-full"
+            class="bg-gradient-to-r from-green-400 to-blue-500 p-3 rounded-full flex items-center justify-center"
           >
             <svg
               class="w-6 h-6 text-white"
@@ -39,26 +42,25 @@
               />
             </svg>
           </div>
-          <div>
-            <h3 class="text-xl font-bold text-gray-800">
+
+          <!-- User Details -->
+          <div class="flex-1">
+            <h3 class="text-xl font-bold text-gray-800 mb-1">
               {{ user?.name || "Loading..." }}
             </h3>
-            <div class="flex items-center space-x-2 text-sm text-gray-500">
-              <!-- <span>Kode User:</span>
+            <div class="flex flex-wrap gap-2 text-sm text-gray-600">
+              <span class="font-medium">Email:</span>
               <span
-                class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full font-medium"
-                >{{ user?.code || "-" }}</span
-              > -->
-              <span>Email:</span>
-              <span
-                class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full font-medium"
-                >{{ user?.email || "-" }}</span
+                class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full font-semibold"
               >
-              <span>Phone:</span>
+                {{ user?.email || "Tidak tersedia" }}
+              </span>
+              <span class="font-medium">Telepon:</span>
               <span
-                class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full font-medium"
-                >{{ user?.phone || "-" }}</span
+                class="bg-blue-100 text-blue-800 px-3 py-1 rounded-full font-semibold"
               >
+                {{ user?.phone || "Tidak tersedia" }}
+              </span>
             </div>
           </div>
         </div>
@@ -280,7 +282,11 @@ import "flatpickr/dist/flatpickr.min.css";
 
 const route = useRoute();
 const router = useRouter();
-const userCode = route.query.code?.trim() || localStorage.getItem("user_code");
+const codeFromRoute = route.query.code?.trim();
+const codeFromBarcode = localStorage.getItem("user_code");
+const codeFromNFC = localStorage.getItem("user_code_nfc");
+
+const userCode = codeFromRoute || codeFromBarcode || codeFromNFC;
 
 // Menggunakan objek Date saat ini untuk defaultDate flatpickr
 // flatpickr akan memformatnya sesuai dateFormat yang ditentukan
@@ -313,7 +319,12 @@ const convertToYYYYMMDD = (dateString) => {
 const getUser = async () => {
   if (!userCode) return;
   try {
-    const res = await axios.get(`/users/by-code/${userCode}`);
+    let endpoint = "/users/by-code/" + userCode; // default: barcode
+    if (codeFromNFC && userCode === codeFromNFC) {
+      endpoint = "/users/by-nfc/" + userCode; // jika login via NFC
+    }
+
+    const res = await axios.get(endpoint);
     user.value = res.data.data;
   } catch (err) {
     console.error("Gagal mengambil user:", err);
@@ -406,15 +417,7 @@ const handleSubmit = async () => {
     form.value = { item_ids: [], borrow_date: "", return_date: "" };
     search.value = "";
     // Refresh daftar barang setelah peminjaman
-    await getItems();
-
-    if (res.data.skipped_items?.length) {
-      alert(
-        `⚠️ Beberapa barang tidak tersedia dan dilewati: ${res.data.skipped_items.join(
-          ", "
-        )}`
-      );
-    }
+    await getItems()
   } catch (err) {
     console.error("Gagal melakukan peminjaman:", err);
     alert(
@@ -429,6 +432,7 @@ const closeModal = () => {
 
 const goToScan = () => {
   localStorage.removeItem("user_code");
+  localStorage.removeItem("user_code_nfc");
   router.push("/");
 };
 
@@ -471,6 +475,7 @@ onMounted(async () => {
       "d-m-y"
     );
   }
+
   if (returnPickerInstance && returnPickerInstance.selectedDates.length > 0) {
     form.value.return_date = returnPickerInstance.formatDate(
       returnPickerInstance.selectedDates[0],

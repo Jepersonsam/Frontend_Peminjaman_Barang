@@ -17,6 +17,7 @@
     "@fullcalendar/vue3": "^6.1.18",
     "@heroicons/vue": "^2.2.0",
     "@tailwindcss/vite": "^4.1.10",
+    "@vue/cli-plugin-pwa": "^5.0.8",
     "axios": "^1.10.0",
     "flatpickr": "^4.6.13",
     "sweetalert2": "^11.22.2",
