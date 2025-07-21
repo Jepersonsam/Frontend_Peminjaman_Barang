@@ -55,6 +55,10 @@ import { useRouter } from "vue-router";
 import Swal from "sweetalert2";
 import "sweetalert2/dist/sweetalert2.min.css";
 
+import Keyboard from "simple-keyboard"; // <-- Virtual Keyboard
+import "simple-keyboard/build/css/index.css"; // CSS Keyboard
+
+
 import FullCalendar from "@fullcalendar/vue3";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
@@ -196,6 +200,17 @@ const fetchEmails = async (query) => {
     console.error("Gagal mengambil email:", err);
     return [];
   }
+};
+
+let keyboard;
+const initKeyboard = (inputId) => {
+  keyboard = new Keyboard({
+    onChange: (input) => {
+      const el = document.getElementById(inputId);
+      if (el) el.value = input;
+    },
+    onKeyPress: (button) => handleKeyPress(button, inputId),
+  });
 };
 
 // === DETAIL BOOKING ===

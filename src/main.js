@@ -4,6 +4,8 @@ import { createApp } from 'vue'
 import App from './App.vue'
 import router from './router'
 import { QrcodeStream } from 'vue-qrcode-reader'
+import "simple-keyboard/build/css/index.css";
+
 
 
 

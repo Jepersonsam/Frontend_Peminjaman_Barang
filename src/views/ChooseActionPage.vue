@@ -213,24 +213,18 @@
           <div
             class="inline-flex items-center justify-center w-16 h-16 bg-blue-500 rounded-full mb-6 group-hover:bg-blue-600 transition-colors duration-300"
           >
-            <svg
-              class="w-8 h-8 text-white"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M12 4v16m8-8H4"
-              />
-            </svg>
+            <img
+              src="../assets/approved.com.png"
+              alt="Icon Persetujuan"
+              class="w-10 h-10 object-contain"
+            />
           </div>
           <h3 class="text-2xl font-bold text-gray-800 mb-3">
             Persetujuan Peminjaman Barang
           </h3>
-          <p class="text-gray-600 mb-6">Cek Persetujuan Peminjaman Barang Anda</p>
+          <p class="text-gray-600 mb-6">
+            Cek Persetujuan Peminjaman Barang Anda
+          </p>
           <div
             class="flex items-center justify-center text-blue-500 font-medium"
           >
