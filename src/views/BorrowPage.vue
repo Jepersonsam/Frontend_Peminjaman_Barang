@@ -18,9 +18,7 @@
 
     <div class="max-w-5xl mx-auto">
       <!-- User Info -->
-      <div
-        class="bg-white shadow-xl rounded-3xl p-6 mb-8 border border-gray-100"
-      >
+      <div class="bg-white shadow-xl rounded-3xl p-6 mb-8 border border-gray-100">
         <div
           class="flex flex-col sm:flex-row sm:items-center sm:justify-start gap-4"
         >
@@ -70,9 +68,7 @@
       <div class="bg-white shadow-xl rounded-3xl p-8 border border-gray-100">
         <form @submit.prevent="handleSubmit" class="space-y-8">
           <!-- Barang Dipinjam -->
-          <div
-            class="bg-white shadow-xl rounded-3xl p-6 border border-gray-100"
-          >
+          <div class="bg-white shadow-xl rounded-3xl p-6 border border-gray-100">
             <h2 class="text-xl font-bold text-amber-700 mb-4">
               Barang yang Sedang Dipinjam
             </h2>
@@ -269,6 +265,45 @@
           </button>
         </div>
       </div>
+
+      <!-- Modal Approval -->
+      <div
+        v-if="showApprovalAlert"
+        class="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50"
+      >
+        <div
+          class="bg-white p-6 rounded-2xl shadow-xl max-w-sm w-full text-center border border-gray-200"
+        >
+          <div
+            class="flex items-center justify-center w-12 h-12 mx-auto mb-3 rounded-full bg-yellow-100"
+          >
+            <svg
+              class="w-6 h-6 text-yellow-600"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M12 9v2m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+              />
+            </svg>
+          </div>
+          <h2 class="text-xl font-bold text-gray-800 mb-2">Butuh Persetujuan</h2>
+          <p class="text-gray-600 mb-4">
+            Barang <span class="font-semibold text-yellow-600">{{ approvalItemName }}</span>
+            memerlukan persetujuan admin sebelum dapat dipinjam.
+          </p>
+          <button
+            @click="showApprovalAlert = false"
+            class="bg-yellow-500 hover:bg-yellow-600 text-white px-6 py-2 rounded-xl font-semibold shadow"
+          >
+            Mengerti
+          </button>
+        </div>
+      </div>
     </div>
   </div>
 </template>
@@ -287,9 +322,6 @@ const codeFromBarcode = localStorage.getItem("user_code");
 const codeFromNFC = localStorage.getItem("user_code_nfc");
 
 const userCode = codeFromRoute || codeFromBarcode || codeFromNFC;
-
-// Menggunakan objek Date saat ini untuk defaultDate flatpickr
-// flatpickr akan memformatnya sesuai dateFormat yang ditentukan
 const today = new Date();
 
 const user = ref(null);
@@ -299,31 +331,30 @@ const barangDipinjam = ref([]);
 const search = ref("");
 const form = ref({
   item_ids: [],
-  borrow_date: "", // Akan menyimpan DD-MM-YY
-  return_date: "", // Akan menyimpan DD-MM-YY
+  borrow_date: "",
+  return_date: "",
 });
 const showBorrowSuccessModal = ref(false);
 const borrowedItemName = ref("");
+const showApprovalAlert = ref(false);
+const approvalItemName = ref("");
 
-// Helper function to convert DD-MM-YY to YYYY-MM-DD
+// Konversi tanggal ke YYYY-MM-DD
 const convertToYYYYMMDD = (dateString) => {
   if (!dateString) return "";
-  // Split DD-MM-YY
   const [day, month, yearTwoDigit] = dateString.split("-");
-  // Convert two-digit year to four-digit year (assuming 20xx)
   const year = `20${yearTwoDigit}`;
   return `${year}-${month}-${day}`;
 };
 
-// Ambil data user berdasarkan kode
+// Ambil user berdasarkan code atau NFC
 const getUser = async () => {
   if (!userCode) return;
   try {
-    let endpoint = "/users/by-code/" + userCode; // default: barcode
+    let endpoint = "/users/by-code/" + userCode;
     if (codeFromNFC && userCode === codeFromNFC) {
-      endpoint = "/users/by-nfc/" + userCode; // jika login via NFC
+      endpoint = "/users/by-nfc/" + userCode;
     }
-
     const res = await axios.get(endpoint);
     user.value = res.data.data;
   } catch (err) {
@@ -331,7 +362,7 @@ const getUser = async () => {
   }
 };
 
-// Ambil semua barang dan pisahkan berdasarkan status
+// Ambil data barang
 const getItems = async () => {
   try {
     const res = await axios.get("/public/items");
@@ -347,7 +378,7 @@ const getItems = async () => {
   }
 };
 
-// Filter barang berdasarkan pencarian
+// Filter barang
 const filteredBarangTersedia = computed(() => {
   if (!search.value) return barangTersedia.value;
   return barangTersedia.value.filter((item) =>
@@ -355,42 +386,38 @@ const filteredBarangTersedia = computed(() => {
   );
 });
 
-// Highlight kata yang dicari
+// Highlight kata pencarian
 const highlightSearchTerm = (text) => {
   if (!search.value) return text;
   const regex = new RegExp(search.value, "gi");
-  return text.replace(regex, (match) => `<span">${match}</span>`);
+  return text.replace(regex, (match) => `<span>${match}</span>`);
 };
 
-// Toggle pemilihan barang
+// Toggle pemilihan item
 const selectItem = (item) => {
   const index = form.value.item_ids.indexOf(item.id);
   if (index === -1) {
     form.value.item_ids.push(item.id);
+    if (item.is_approval) {
+      approvalItemName.value = item.name;
+      showApprovalAlert.value = true;
+    }
   } else {
     form.value.item_ids.splice(index, 1);
   }
 };
 
-// Kirim data peminjaman
+// Submit form
 const handleSubmit = async () => {
-  if (
-    !form.value.item_ids.length ||
-    !form.value.borrow_date ||
-    !form.value.return_date
-  ) {
+  if (!form.value.item_ids.length || !form.value.borrow_date || !form.value.return_date) {
     alert("⚠️ Harap pilih minimal satu barang dan isi tanggal.");
     return;
   }
 
-  // Konversi tanggal dari DD-MM-YY ke YYYY-MM-DD untuk validasi dan pengiriman API
   const formattedBorrowDateForAPI = convertToYYYYMMDD(form.value.borrow_date);
   const formattedReturnDateForAPI = convertToYYYYMMDD(form.value.return_date);
 
-  // Validasi tanggal kembali tidak boleh lebih awal dari tanggal pinjam
-  if (
-    new Date(formattedReturnDateForAPI) < new Date(formattedBorrowDateForAPI)
-  ) {
+  if (new Date(formattedReturnDateForAPI) < new Date(formattedBorrowDateForAPI)) {
     alert("⚠️ Tanggal kembali tidak boleh lebih awal dari tanggal pinjam.");
     return;
   }
@@ -399,30 +426,24 @@ const handleSubmit = async () => {
     const payload = {
       user_code: user.value.code,
       item_ids: form.value.item_ids,
-      borrow_date: formattedBorrowDateForAPI, // Kirim dalam format YYYY-MM-DD
-      return_date: formattedReturnDateForAPI, // Kirim dalam format YYYY-MM-DD
+      borrow_date: formattedBorrowDateForAPI,
+      return_date: formattedReturnDateForAPI,
     };
 
-    const res = await axios.post("/public/borrowings", payload);
+    await axios.post("/public/borrowings", payload);
 
-    // Set nama barang yang dipinjam untuk modal sukses
     borrowedItemName.value = semuaBarang.value
       .filter((item) => form.value.item_ids.includes(item.id))
       .map((item) => item.name)
       .join(", ");
 
     showBorrowSuccessModal.value = true;
-
-    // Reset form setelah sukses
     form.value = { item_ids: [], borrow_date: "", return_date: "" };
     search.value = "";
-    // Refresh daftar barang setelah peminjaman
-    await getItems()
+    await getItems();
   } catch (err) {
     console.error("Gagal melakukan peminjaman:", err);
-    alert(
-      err.response?.data?.message || "❌ Gagal mengajukan peminjaman barang"
-    );
+    alert(err.response?.data?.message || "❌ Gagal mengajukan peminjaman barang");
   }
 };
 
@@ -443,69 +464,45 @@ const goBack = () => {
 onMounted(async () => {
   if (!userCode) {
     alert("❌ Tidak ada data pengguna. Silakan scan QR Code terlebih dahulu.");
-    router.push({ name: "ScanPage" }); // atau "/" jika nama route-nya begitu
+    router.push({ name: "ScanPage" });
     return;
   }
   await getUser();
   await getItems();
 
-  // Inisialisasi flatpickr untuk Tanggal Pinjam
   const borrowPickerInstance = flatpickr("#borrowDate", {
     defaultDate: today,
-    dateFormat: "d-m-y", // Mengatur format tampilan dan nilai input menjadi DD-MM-YY
-    onChange: function (selectedDates, dateStr, instance) {
-      form.value.borrow_date = dateStr; // Update v-model dengan format DD-MM-YY
+    dateFormat: "d-m-y",
+    onChange: (selectedDates, dateStr) => {
+      form.value.borrow_date = dateStr;
     },
   });
 
-  // Inisialisasi flatpickr untuk Tanggal Kembali
   const returnPickerInstance = flatpickr("#returnDate", {
     defaultDate: today,
-    dateFormat: "d-m-y", // Mengatur format tampilan dan nilai input menjadi DD-MM-YY
-    onChange: function (selectedDates, dateStr, instance) {
-      form.value.return_date = dateStr; // Update v-model dengan format DD-MM-YY
+    dateFormat: "d-m-y",
+    onChange: (selectedDates, dateStr) => {
+      form.value.return_date = dateStr;
     },
   });
 
-  // Set initial form values for dates based on flatpickr's default
-  // This ensures v-model is populated with DD-MM-YY format on load
-  if (borrowPickerInstance && borrowPickerInstance.selectedDates.length > 0) {
-    form.value.borrow_date = borrowPickerInstance.formatDate(
-      borrowPickerInstance.selectedDates[0],
-      "d-m-y"
-    );
-  }
-
-  if (returnPickerInstance && returnPickerInstance.selectedDates.length > 0) {
-    form.value.return_date = returnPickerInstance.formatDate(
-      returnPickerInstance.selectedDates[0],
-      "d-m-y"
-    );
-  }
+  form.value.borrow_date = borrowPickerInstance.input.value;
+  form.value.return_date = returnPickerInstance.input.value;
 });
 </script>
 
 <style scoped>
-.custom-scrollbar {
-  scrollbar-width: thin;
-  scrollbar-color: #cbd5e0 #f7fafc;
-}
-
 .custom-scrollbar::-webkit-scrollbar {
-  width: 6px;
+  width: 8px;
 }
-
-.custom-scrollbar::-webkit-scrollbar-track {
-  background: #f7fafc;
-  border-radius: 3px;
-}
-
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: #cbd5e0;
-  border-radius: 3px;
+  background-color: rgba(107, 114, 128, 0.5);
+  border-radius: 9999px;
 }
-
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: #a0aec0;
+  background-color: rgba(107, 114, 128, 0.8);
+}
+span {
+  font-weight: bold;
 }
 </style>

@@ -65,16 +65,21 @@ const handleCode = async (code) => {
     }
 
     const res = await axios.get(`/users/by-nfc/${trimmedCode}`);
-    if (res.data?.data) {
-      localStorage.setItem("user_code", trimmedCode);
-      localStorage.setItem("user_code_nfc", trimmedCode);
-      userInfo.value = res.data.data;
-      notification.value = `Pengguna ditemukan: ${res.data.data.name}`;
+   if (res.data?.data) {
+  const userData = res.data.data;
 
-      setTimeout(() => {
-        router.push({ name: "ChooseAction", query: { code: trimmedCode } });
-      }, 2000);
-    } else {
+  // Simpan data lengkap user di localStorage
+  localStorage.setItem("user_data", JSON.stringify(userData));
+  localStorage.setItem("user_code_nfc", trimmedCode);
+
+  userInfo.value = userData;
+  notification.value = `Pengguna ditemukan: ${userData.name}`;
+
+  setTimeout(() => {
+    router.push({ name: "ChooseAction", query: { code: trimmedCode } });
+  }, 2000);
+}
+ else {
       notification.value = "Data tidak dikenali dalam sistem.";
     }
   } catch (err) {
