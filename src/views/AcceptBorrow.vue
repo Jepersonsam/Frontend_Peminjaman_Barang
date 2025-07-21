@@ -8,12 +8,21 @@
         </svg>
       </div>
       <h1 class="text-3xl font-bold text-gray-800 mb-2">Persetujuan Peminjaman Barang</h1>
-      <p class="text-lg text-gray-600">Barang yang sedang menunggu persetujuan admin</p>
+      <p class="text-lg text-gray-600">Semua peminjaman barang oleh Anda</p>
     </div>
 
-    <!-- Daftar Persetujuan -->
-    <div v-if="borrowings.length" class="grid grid-cols-1  gap-6 max-w-4xl w-full">
-      <div v-for="b in borrowings" :key="b.id" class="bg-white rounded-2xl p-6 border border-gray-200 shadow-md hover:shadow-lg transition">
+    <!-- Loading -->
+    <div v-if="loading" class="text-gray-700 font-semibold text-lg">
+      ⏳ Memuat data...
+    </div>
+
+    <!-- Daftar Peminjaman -->
+    <div v-else-if="borrowings.length" class="grid grid-cols-1 gap-6 max-w-4xl w-full">
+      <div
+        v-for="b in borrowings"
+        :key="b.id"
+        class="bg-white rounded-2xl p-6 border border-gray-200 shadow-md hover:shadow-lg transition"
+      >
         <div class="flex items-center justify-between mb-2">
           <h3 class="text-lg font-bold text-gray-800">{{ b.item.name }}</h3>
           <span
@@ -28,6 +37,8 @@
           </span>
         </div>
         <p class="text-sm text-gray-500 mb-2">Serial: {{ b.item.serial_code }}</p>
+        <p class="text-sm text-gray-600">Tgl Pinjam: {{ b.borrow_date }}</p>
+        <p class="text-sm text-gray-600 mb-2">Tgl Kembali: {{ b.return_date }}</p>
         <div class="flex items-center gap-3 mt-2">
           <div class="w-8 h-8 bg-blue-100 text-blue-700 font-bold rounded-full flex items-center justify-center">
             {{ getInitials(b.user.name) }}
@@ -39,14 +50,10 @@
       </div>
     </div>
 
-    <!-- Tidak Ada Persetujuan -->
+    <!-- Tidak Ada Peminjaman -->
     <div v-else class="text-center text-white mt-10">
-      <p class="text-lg font-semibold">✅ Semua permintaan telah diproses. Tidak ada yang menunggu.</p>
+      <p class="text-lg font-semibold">✅ Tidak ada data peminjaman ditemukan.</p>
     </div>
-
-    <!-- Dekoratif -->
-    <div class="absolute top-10 left-10 w-20 h-20 bg-blue-100 rounded-full opacity-50 animate-pulse"></div>
-    <div class="absolute top-1/2 left-5 w-12 h-12 bg-indigo-100 rounded-full opacity-30 animate-bounce"></div>
   </div>
 </template>
 
@@ -55,19 +62,46 @@ import { ref, onMounted } from 'vue'
 import axios from '../services/api'
 
 const borrowings = ref([])
+const user = ref({})
+const loading = ref(true)
 
-const loadPendingApprovals = async () => {
-  try {
-    const res = await axios.get('/borrowings?approval_status=pending')
-    borrowings.value = res.data.data.filter(b => b.item?.is_approval)
-  } catch (err) {
-    console.error('Gagal load data persetujuan:', err)
+const getUserFromLocalStorage = () => {
+  const userData = localStorage.getItem('user')
+  if (userData) {
+    user.value = JSON.parse(userData)
   }
 }
+
+const loadUserBorrowings = async () => {
+  try {
+    if (!user.value?.id) {
+      console.warn('⏳ User belum siap, hentikan loadUserBorrowings')
+      return
+    }
+
+    loading.value = true
+    console.log(`🔍 Ambil data peminjaman untuk user ID: ${user.value.id}`)
+
+    const res = await axios.get(`/borrowings/user/${user.value.id}`)
+    borrowings.value = res.data.data || []
+    console.log('✅ Data peminjaman user:', borrowings.value)
+  } catch (err) {
+    console.error('❌ Gagal load data:', err)
+  } finally {
+    loading.value = false
+  }
+}
+
+onMounted(async () => {
+  getUserFromLocalStorage()
+  if (user.value?.id) {
+    await loadUserBorrowings()
+  } else {
+    console.error('❌ User tidak ditemukan di localStorage')
+  }
+})
 
 const getInitials = (name) => {
   return name?.split(' ').map(part => part[0]).join('').slice(0, 2).toUpperCase() || '??'
 }
-
-onMounted(loadPendingApprovals)
 </script>

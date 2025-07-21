@@ -464,12 +464,15 @@ const handleCode = async (code) => {
 
     const res = await axios.get(`/users/by-code/${trimmedCode}`);
     if (res.data && res.data.data) {
-      localStorage.setItem("user_code", trimmedCode);
+      const userData = res.data.data;
+
+      // Simpan data lengkap user di localStorage
+      localStorage.setItem("user_data", JSON.stringify(userData));
 
       showNotification(
         "success",
         "Berhasil!",
-        `Pengguna ditemukan: ${res.data.data.name}`,
+        `Pengguna ditemukan: ${userData.name}`,
         2000
       );
 
