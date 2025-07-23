@@ -16,6 +16,7 @@
 <script setup>
 import { ref } from 'vue'
 import axios from '../services/api'
+import { encrypt } from '@/utils/secureStorage' // ✅ import enkripsi
 
 const secretId = ref('')
 const message = ref('')
@@ -27,8 +28,13 @@ const submitSecret = async () => {
     })
 
     if (res.data.valid) {
-      localStorage.setItem('secret_id', secretId.value)
+      // ✅ Simpan terenkripsi ke localStorage
+      const encryptedSecret = encrypt(secretId.value)
+      localStorage.setItem('secret_id', encryptedSecret)
+
       message.value = 'Secret ID valid. Fitur lengkap diaktifkan.'
+    } else {
+      message.value = 'Secret ID tidak valid.'
     }
   } catch (e) {
     message.value = 'Secret ID tidak valid.'

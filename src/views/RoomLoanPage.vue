@@ -55,16 +55,18 @@ import { useRouter } from "vue-router";
 import Swal from "sweetalert2";
 import "sweetalert2/dist/sweetalert2.min.css";
 
-import Keyboard from "simple-keyboard"; // <-- Virtual Keyboard
-import "simple-keyboard/build/css/index.css"; // CSS Keyboard
-
+import Keyboard from "simple-keyboard";
+import "simple-keyboard/build/css/index.css";
 
 import FullCalendar from "@fullcalendar/vue3";
 import dayGridPlugin from "@fullcalendar/daygrid";
 import timeGridPlugin from "@fullcalendar/timegrid";
 import interactionPlugin from "@fullcalendar/interaction";
+import { useUserStore } from "@/stores/userStore"; // 🔥 Pinia Store
 
 const router = useRouter();
+const userStore = useUserStore(); // Ambil user dari Pinia
+
 const rooms = ref([]);
 const bookings = ref([]);
 const weeklyBookings = ref([]);
@@ -85,35 +87,48 @@ const form = ref({
   status: "pending",
 });
 
-const codeFromQuery = router.currentRoute.value.query.code?.trim();
-const codeFromBarcode = localStorage.getItem("user_code");
-const codeFromNFC = localStorage.getItem("user_code_nfc");
-const userCode = codeFromQuery || codeFromBarcode || codeFromNFC;
+const route = router.currentRoute.value;
+const userCode =
+  userStore.code || userStore.code_nfc || route.query.code?.trim();
 
-// Ambil data user
+/** === Ambil data user === */
 const getUser = async () => {
+  if (userStore.id) {
+    user.value = {
+      id: userStore.id,
+      name: userStore.name,
+      email: userStore.email,
+      phone: userStore.phone,
+      code: userStore.code,
+      code_nfc: userStore.code_nfc,
+    };
+    return;
+  }
+
   if (!userCode) return;
+
   try {
     let endpoint = `/users/by-code/${userCode}`;
-    if (userCode === codeFromNFC) endpoint = `/users/by-nfc/${userCode}`;
+    if (userCode === userStore.code_nfc) endpoint = `/users/by-nfc/${userCode}`;
     const res = await axios.get(endpoint);
     user.value = res.data.data;
+    userStore.setUser(user.value); // ✅ Simpan user ke Pinia
   } catch (err) {
     console.error("Gagal mengambil user:", err);
   }
 };
 
-// Ambil data rooms
+/** === Ambil data ruangan === */
 const getRooms = async () => {
   try {
     const res = await axios.get("/rooms");
-    rooms.value = res.data.filter((room) => room.is_active);
+    rooms.value = res.data.data.filter((room) => room.is_active);
   } catch (err) {
     Swal.fire("Gagal!", "Gagal mengambil data ruangan", "error");
   }
 };
 
-// Ambil peminjaman ruangan
+/** === Cek ketersediaan ruangan === */
 const checkRoomAvailability = async () => {
   if (!form.value.room_id) {
     bookings.value = [];
@@ -133,7 +148,7 @@ const checkRoomAvailability = async () => {
   }
 };
 
-// Ambil jadwal mingguan
+/** === Ambil jadwal mingguan === */
 const getWeeklyBookings = async (roomId) => {
   try {
     const res = await axios.get(`/weekly-room-loans/by-room`, {
@@ -145,7 +160,7 @@ const getWeeklyBookings = async (roomId) => {
   }
 };
 
-// Event Calendar
+/** === Opsi kalender === */
 const calendarOptions = ref({
   plugins: [dayGridPlugin, timeGridPlugin, interactionPlugin],
   initialView: "timeGridWeek",
@@ -190,7 +205,7 @@ const calendarOptions = ref({
   eventClick: (info) => showBookingDetail(info.event.extendedProps.data),
 });
 
-// === AUTOCOMPLETE EMAIL ===
+/** === Autocomplete Email === */
 const fetchEmails = async (query) => {
   if (!query) return [];
   try {
@@ -202,52 +217,41 @@ const fetchEmails = async (query) => {
   }
 };
 
-let keyboard;
-const initKeyboard = (inputId) => {
-  keyboard = new Keyboard({
-    onChange: (input) => {
-      const el = document.getElementById(inputId);
-      if (el) el.value = input;
-    },
-    onKeyPress: (button) => handleKeyPress(button, inputId),
-  });
-};
-
-// === DETAIL BOOKING ===
+/** === Detail Booking === */
 const showBookingDetail = (booking) => {
   Swal.fire({
     title:
       '<div style="font-size:1.6rem; font-weight:800; color:#1e293b;">Detail Peminjaman</div>',
     html: `
       <div style="display:flex; flex-direction:column; gap:12px; text-align:left; width:100%; padding:8px;">
-        <div style="background:#f9fafb; padding:10px 14px; border-radius:10px;">
+        <div style="background:#DDDDDD; padding:10px 14px; border-radius:10px;">
           <strong style="color:#374151;">Nama Peminjam:</strong><br>${
             booking.borrower_name
           }
         </div>
-        <div style="background:#f9fafb; padding:10px 14px; border-radius:10px;">
+        <div style="background:#DDDDDD; padding:10px 14px; border-radius:10px;">
           <strong style="color:#374151;">Kontak:</strong><br>${
             booking.borrower_contact || "-"
           }
         </div>
-        <div style="background:#f9fafb; padding:10px 14px; border-radius:10px;">
+        <div style="background:#DDDDDD; padding:10px 14px; border-radius:10px;">
           <strong style="color:#374151;">Email:</strong><br>${
             Array.isArray(booking.emails)
               ? booking.emails.join(", ")
               : booking.emails || "-"
           }
         </div>
-        <div style="background:#f9fafb; padding:10px 14px; border-radius:10px;">
+        <div style="background:#DDDDDD; padding:10px 14px; border-radius:10px;">
           <strong style="color:#374151;">Tujuan:</strong><br>${
             booking.purpose || "-"
           }
         </div>
-        <div style="background:#f9fafb; padding:10px 14px; border-radius:10px;">
+        <div style="background:#DDDDDD; padding:10px 14px; border-radius:10px;">
           <strong style="color:#374151;">Waktu:</strong><br>${formatDateTime(
             booking.start_time
           )} - ${formatDateTime(booking.end_time)}
         </div>
-        <div style="background:#f9fafb; padding:10px 14px; border-radius:10px;">
+        <div style="background:#DDDDDD; padding:10px 14px; border-radius:10px;">
           <strong style="color:#374151;">Status:</strong><br><span style="color:${getStatusColor(
             booking.status
           )}; font-weight:600;">${booking.status.toUpperCase()}</span>
@@ -262,7 +266,7 @@ const showBookingDetail = (booking) => {
   });
 };
 
-// === Format DateTime untuk detail ===
+/** === Format DateTime === */
 const formatDateTime = (dateTime) => {
   const date = new Date(dateTime);
   return `${date.toLocaleDateString("id-ID")} ${date.toLocaleTimeString(
@@ -271,7 +275,7 @@ const formatDateTime = (dateTime) => {
   )}`;
 };
 
-// === DRAG Event Handler (Peminjaman Baru) ===
+/** === Handle Drag (Pilih Jadwal) === */
 const handleDrag = (info) => {
   const start = new Date(info.start);
   const end = new Date(info.end);
@@ -283,9 +287,6 @@ const handleDrag = (info) => {
       icon: "warning",
       title: "Tanggal Tidak Valid",
       text: "Anda tidak dapat memilih tanggal yang sudah lewat.",
-      background: "linear-gradient(135deg, #fff, #f9fafb)",
-      color: "#111827",
-      confirmButtonColor: "#2563eb",
     });
     return;
   }
@@ -380,7 +381,7 @@ const handleDrag = (info) => {
   }, 500);
 };
 
-// === Booking Form HTML ===
+/** === Booking Form HTML === */
 const bookingFormHTML = (formattedDate, startTime, endTime) => `
   <div style="display:flex; flex-direction:column; gap:16px; text-align:left; width:100%;">
     <div>
@@ -398,7 +399,7 @@ const bookingFormHTML = (formattedDate, startTime, endTime) => `
     <div style="position: relative; z-index:10;">
       <label style="font-weight:600; color:#374151;">Email (pisahkan dengan koma)</label>
       <input id="emailInput" style="width:100%; padding:12px; border:1px solid #d1d5db; border-radius:12px;" value="${
-        user.value.email || ""
+        user.value.email ? user.value.email + ", " : ""
       }">
       <div id="emailSuggestions" style="position: absolute; top: 100%; left: 0; width: 100%; background: white; border: 1px solid #ddd; border-top: none; max-height: 150px; overflow-y: auto; display: none; z-index: 99999; border-radius: 0 0 10px 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);"></div>
     </div>
@@ -419,7 +420,7 @@ const bookingFormHTML = (formattedDate, startTime, endTime) => `
   </div>
 `;
 
-// === Submit Peminjaman ===
+/** === Submit Peminjaman === */
 const handleSubmit = async () => {
   try {
     const [day, month, year] = form.value.borrow_date.split("-");
@@ -454,6 +455,7 @@ const handleSubmit = async () => {
   }
 };
 
+/** === Status Color === */
 const getStatusColor = (status) => {
   const colors = {
     approved: "#10B981",
@@ -467,7 +469,8 @@ watch(() => form.value.room_id, checkRoomAvailability);
 
 const goBack = () => router.push("/choose-action");
 
-onMounted(() => {
+/** === Lifecycle === */
+onMounted(async () => {
   if (!userCode) {
     Swal.fire(
       "QR Belum Dipindai",
@@ -477,7 +480,18 @@ onMounted(() => {
     router.push({ name: "ScanPage" });
     return;
   }
-  getRooms();
-  getUser();
+
+  await getRooms();
+  await getUser();
+
+  // Kalau user tetap null setelah getUser
+  if (!user.value || !user.value.id) {
+    Swal.fire(
+      "User tidak ditemukan",
+      "Silakan scan ulang kartu atau QR.",
+      "error"
+    );
+    router.push({ name: "ScanPage" });
+  }
 });
 </script>

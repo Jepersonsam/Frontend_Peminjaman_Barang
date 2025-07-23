@@ -304,8 +304,9 @@ const hideNotification = () => {
 };
 
 const exitToScanPage = () => {
-  localStorage.removeItem("token");
-  delete axios.defaults.headers.common["Authorization"];
+  localStorage.removeItem("user_code"); // Hapus kode dari barcode
+  localStorage.removeItem("user_code_nfc"); // Hapus kode dari NFC
+  localStorage.removeItem("user_data"); // Hapus data user lengkap
   router.push({ name: "Scan" });
 };
 

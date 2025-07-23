@@ -260,10 +260,13 @@
 <script setup>
 import { useRouter, useRoute } from "vue-router";
 import { ref, onMounted } from "vue";
+import { useUserStore } from "../stores/userStore";
+
 
 const router = useRouter();
 const route = useRoute();
 const userCode = route.query.code;
+const userStore = useUserStore();
 
 const hasSecret = ref(false);
 
@@ -289,9 +292,8 @@ const goToAcceptBorrow = () => {
 };
 
 const goToScan = () => {
-  localStorage.removeItem("user_code"); // Hapus kode dari barcode
-  localStorage.removeItem("user_code_nfc"); // Hapus kode dari NFC
-  localStorage.removeItem("user_data"); // Hapus data user lengkap
-  router.push({ name: "Scan" }); // Redirect ke halaman scan
+  userStore.clearUser(); // Hapus data user dari Pinia
+  router.push({ name: "Scan" }); 
 };
+
 </script>

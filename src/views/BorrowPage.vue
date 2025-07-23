@@ -311,17 +311,16 @@
 <script setup>
 import { ref, computed, onMounted } from "vue";
 import { useRoute, useRouter } from "vue-router";
+import { useUserStore } from "@/stores/userStore";
 import axios from "@/services/api.js";
 import flatpickr from "flatpickr";
 import "flatpickr/dist/flatpickr.min.css";
 
 const route = useRoute();
 const router = useRouter();
-const codeFromRoute = route.query.code?.trim();
-const codeFromBarcode = localStorage.getItem("user_code");
-const codeFromNFC = localStorage.getItem("user_code_nfc");
+const userStore = useUserStore();
 
-const userCode = codeFromRoute || codeFromBarcode || codeFromNFC;
+const userCode = userStore.code || userStore.code_nfc || route.query.code?.trim();
 const today = new Date();
 
 const user = ref(null);
@@ -347,16 +346,31 @@ const convertToYYYYMMDD = (dateString) => {
   return `${year}-${month}-${day}`;
 };
 
-// Ambil user berdasarkan code atau NFC
+// Ambil data user
 const getUser = async () => {
+  if (userStore.id) {
+    user.value = {
+      id: userStore.id,
+      name: userStore.name,
+      email: userStore.email,
+      phone: userStore.phone,
+      code: userStore.code,
+      code_nfc: userStore.code_nfc,
+    };
+    return;
+  }
+
   if (!userCode) return;
+
   try {
     let endpoint = "/users/by-code/" + userCode;
-    if (codeFromNFC && userCode === codeFromNFC) {
+    if (userStore.code_nfc && userCode === userStore.code_nfc) {
       endpoint = "/users/by-nfc/" + userCode;
     }
+
     const res = await axios.get(endpoint);
     user.value = res.data.data;
+    userStore.setUser(user.value);
   } catch (err) {
     console.error("Gagal mengambil user:", err);
   }
@@ -378,7 +392,7 @@ const getItems = async () => {
   }
 };
 
-// Filter barang
+// Filter barang berdasarkan pencarian
 const filteredBarangTersedia = computed(() => {
   if (!search.value) return barangTersedia.value;
   return barangTersedia.value.filter((item) =>
@@ -386,14 +400,14 @@ const filteredBarangTersedia = computed(() => {
   );
 });
 
-// Highlight kata pencarian
+// Highlight pencarian
 const highlightSearchTerm = (text) => {
   if (!search.value) return text;
   const regex = new RegExp(search.value, "gi");
   return text.replace(regex, (match) => `<span>${match}</span>`);
 };
 
-// Toggle pemilihan item
+// Pilih / batal pilih barang
 const selectItem = (item) => {
   const index = form.value.item_ids.indexOf(item.id);
   if (index === -1) {
@@ -407,17 +421,17 @@ const selectItem = (item) => {
   }
 };
 
-// Submit form
+// Submit peminjaman
 const handleSubmit = async () => {
   if (!form.value.item_ids.length || !form.value.borrow_date || !form.value.return_date) {
     alert("⚠️ Harap pilih minimal satu barang dan isi tanggal.");
     return;
   }
 
-  const formattedBorrowDateForAPI = convertToYYYYMMDD(form.value.borrow_date);
-  const formattedReturnDateForAPI = convertToYYYYMMDD(form.value.return_date);
+  const formattedBorrowDate = convertToYYYYMMDD(form.value.borrow_date);
+  const formattedReturnDate = convertToYYYYMMDD(form.value.return_date);
 
-  if (new Date(formattedReturnDateForAPI) < new Date(formattedBorrowDateForAPI)) {
+  if (new Date(formattedReturnDate) < new Date(formattedBorrowDate)) {
     alert("⚠️ Tanggal kembali tidak boleh lebih awal dari tanggal pinjam.");
     return;
   }
@@ -426,8 +440,8 @@ const handleSubmit = async () => {
     const payload = {
       user_code: user.value.code,
       item_ids: form.value.item_ids,
-      borrow_date: formattedBorrowDateForAPI,
-      return_date: formattedReturnDateForAPI,
+      borrow_date: formattedBorrowDate,
+      return_date: formattedReturnDate,
     };
 
     await axios.post("/public/borrowings", payload);
@@ -452,8 +466,7 @@ const closeModal = () => {
 };
 
 const goToScan = () => {
-  localStorage.removeItem("user_code");
-  localStorage.removeItem("user_code_nfc");
+  userStore.clearUser();
   router.push("/");
 };
 
@@ -461,12 +474,14 @@ const goBack = () => {
   router.push("/choose-action");
 };
 
+// Lifecycle
 onMounted(async () => {
   if (!userCode) {
     alert("❌ Tidak ada data pengguna. Silakan scan QR Code terlebih dahulu.");
     router.push({ name: "ScanPage" });
     return;
   }
+
   await getUser();
   await getItems();
 
@@ -490,6 +505,8 @@ onMounted(async () => {
   form.value.return_date = returnPickerInstance.input.value;
 });
 </script>
+
+
 
 <style scoped>
 .custom-scrollbar::-webkit-scrollbar {

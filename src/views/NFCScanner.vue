@@ -43,18 +43,20 @@
 </template>
 
 <script setup>
-import { ref } from "vue";
+import { ref, onBeforeUnmount } from "vue";
 import { useRouter } from "vue-router";
 import axios from "@/services/api";
+import { useUserStore } from "@/stores/userStore";
 
 const error = ref("");
 const notification = ref("");
 const scanning = ref(false);
 const userInfo = ref({});
 const router = useRouter();
+const userStore = useUserStore();
 let ws = null;
 
-// 🔎 Validasi dan ambil data pengguna berdasarkan NFC code
+/** 🔎 Ambil data user berdasarkan NFC code */
 const handleCode = async (code) => {
   scanning.value = true;
   try {
@@ -65,21 +67,18 @@ const handleCode = async (code) => {
     }
 
     const res = await axios.get(`/users/by-nfc/${trimmedCode}`);
-   if (res.data?.data) {
-  const userData = res.data.data;
+    if (res.data?.data) {
+      const userData = res.data.data;
 
-  // Simpan data lengkap user di localStorage
-  localStorage.setItem("user_data", JSON.stringify(userData));
-  localStorage.setItem("user_code_nfc", trimmedCode);
+      // Simpan hanya code_nfc di Pinia (bukan semua user_data di localStorage)
+      userStore.setUser({ code_nfc: trimmedCode });
+      userInfo.value = userData;
+      notification.value = `Pengguna ditemukan: ${userData.name}`;
 
-  userInfo.value = userData;
-  notification.value = `Pengguna ditemukan: ${userData.name}`;
-
-  setTimeout(() => {
-    router.push({ name: "ChooseAction", query: { code: trimmedCode } });
-  }, 2000);
-}
- else {
+      setTimeout(() => {
+        router.push({ name: "ChooseAction", query: { code: trimmedCode } });
+      }, 2000);
+    } else {
       notification.value = "Data tidak dikenali dalam sistem.";
     }
   } catch (err) {
@@ -90,54 +89,45 @@ const handleCode = async (code) => {
   }
 };
 
-// 🎯 Mulai proses pemindaian
-const startScan = async () => {
-  error.value = "";
-  notification.value = "";
-  userInfo.value = {};
-  scanning.value = true;
+/** 🎯 Scan menggunakan Web NFC */
+const scanWithWebNFC = async () => {
+  try {
+    const permissionStatus = await navigator.permissions.query({ name: "nfc" }).catch(() => null);
+    if (permissionStatus?.state === "denied") {
+      error.value = "Izin NFC ditolak. Aktifkan dari pengaturan browser.";
+      scanning.value = false;
+      return;
+    }
 
-  // 🔐 Web NFC untuk perangkat yang mendukung
-  if ("NDEFReader" in window) {
-    try {
-      const permissionStatus = await navigator.permissions.query({ name: "nfc" }).catch(() => null);
-      if (permissionStatus?.state === "denied") {
-        error.value = "Izin NFC ditolak. Aktifkan dari pengaturan browser.";
+    const reader = new NDEFReader();
+    await reader.scan();
+    notification.value = "Silakan tap kartu NFC Anda di belakang perangkat.";
+
+    reader.onreading = async (event) => {
+      if (!event.message.records.length) {
+        error.value = "Tag NFC tidak memuat data.";
         scanning.value = false;
         return;
       }
 
-      const reader = new NDEFReader();
-      await reader.scan();
-      notification.value = "Silakan tap kartu NFC Anda di belakang perangkat.";
+      const record = event.message.records[0];
+      const text = new TextDecoder().decode(record.data);
+      await handleCode(text);
+    };
 
-      reader.onreading = async (event) => {
-        if (!event.message.records.length) {
-          error.value = "Tag NFC tidak memuat data.";
-          scanning.value = false;
-          return;
-        }
-
-        const record = event.message.records[0];
-        const text = new TextDecoder().decode(record.data);
-        await handleCode(text);
-      };
-
-      reader.onerror = () => {
-        error.value = "Terjadi kesalahan saat membaca NFC.";
-        scanning.value = false;
-      };
-
-      return;
-    } catch (err) {
-      console.error("Gagal menggunakan Web NFC:", err);
-      error.value = "Browser tidak mengizinkan akses NFC.";
+    reader.onerror = () => {
+      error.value = "Terjadi kesalahan saat membaca NFC.";
       scanning.value = false;
-      return;
-    }
+    };
+  } catch (err) {
+    console.error("Gagal menggunakan Web NFC:", err);
+    error.value = "Browser tidak mengizinkan akses NFC.";
+    scanning.value = false;
   }
+};
 
-  // 💻 Fallback ke WebSocket reader (via PC)
+/** 💻 Scan menggunakan WebSocket (Fallback) */
+const scanWithWebSocket = async () => {
   notification.value = "Menggunakan reader lokal (WebSocket)...";
 
   if (ws && ws.readyState === WebSocket.OPEN) {
@@ -154,9 +144,7 @@ const startScan = async () => {
 
     ws.onmessage = async (event) => {
       const blockData = event.data.trim();
-      if (blockData) {
-        await handleCode(blockData);
-      }
+      if (blockData) await handleCode(blockData);
     };
 
     ws.onerror = () => {
@@ -172,6 +160,25 @@ const startScan = async () => {
     scanning.value = false;
   }
 };
+
+/** 🚀 Jalankan Scan */
+const startScan = async () => {
+  error.value = "";
+  notification.value = "";
+  userInfo.value = {};
+  scanning.value = true;
+
+  if ("NDEFReader" in window) {
+    await scanWithWebNFC();
+  } else {
+    await scanWithWebSocket();
+  }
+};
+
+/** Bersihkan WebSocket saat keluar halaman */
+onBeforeUnmount(() => {
+  if (ws) ws.close();
+});
 </script>
 
 <style scoped>
@@ -185,16 +192,10 @@ const startScan = async () => {
 }
 @keyframes shake {
   0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(-4px); }
-  75% { transform: translateX(4px); }
+  25% { transform: translateX(-6px); }
+  75% { transform: translateX(6px); }
 }
-.animate-fade-in {
-  animation: fade-in 0.6s ease-out forwards;
-}
-.animate-pulse-subtle {
-  animation: pulse-subtle 3s ease-in-out infinite;
-}
-.animate-shake {
-  animation: shake 0.4s ease-in-out;
-}
+.animate-fade-in { animation: fade-in 0.6s ease-out forwards; }
+.animate-pulse-subtle { animation: pulse-subtle 3s ease-in-out infinite; }
+.animate-shake { animation: shake 0.4s ease-in-out; }
 </style>

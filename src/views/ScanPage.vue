@@ -217,13 +217,13 @@
         </div>
       </div>
 
-      <RouterLink :to="{ name: 'NFCScanner' }">
+      <!-- <RouterLink :to="{ name: 'NFCScanner' }">
         <button
           class="px-6 py-3 rounded-xl bg-indigo-600 text-white shadow hover:bg-indigo-700 transition duration-300"
         >
           Tap ID Card (NFC)
         </button>
-      </RouterLink>
+      </RouterLink> -->
 
       <!-- Error Message -->
       <div v-if="error" class="mb-6">
@@ -252,6 +252,12 @@
           </div>
         </div>
       </div>
+      <input
+        ref="scannerInput"
+        type="text"
+        class="absolute opacity-0 pointer-events-none"
+        @input="onScannerInput"
+      />
     </div>
 
     <!-- Toast Notification -->
@@ -404,11 +410,13 @@
 </template>
 
 <script setup>
-import { ref } from "vue";
+import { ref, onMounted, onBeforeUnmount } from "vue";
 import { useRouter } from "vue-router";
 import { QrcodeStream } from "vue-qrcode-reader";
 import axios from "@/services/api";
-import { RouterLink } from "vue-router";
+// import { RouterLink } from "vue-router";
+import { useUserStore } from "@/stores/userStore";
+// import { encrypt } from "../utils/secureStorage";
 
 const error = ref("");
 const isScanning = ref(false);
@@ -416,6 +424,9 @@ const showManualInput = ref(false);
 const manualCode = ref("");
 const notification = ref(null);
 const router = useRouter();
+const userStore = useUserStore();
+
+let ws = null; // untuk WebSocket NFC fallback
 
 const showNotification = (type, title, message, duration = 4000) => {
   notification.value = { type, title, message, show: true };
@@ -430,6 +441,8 @@ const showNotification = (type, title, message, duration = 4000) => {
   }, duration);
 };
 
+
+// QR CODE SCAN
 const onDecode = async (code) => {
   const extractLastSegment = (input) => {
     try {
@@ -459,15 +472,12 @@ const handleCode = async (code) => {
   }
 
   try {
-    // Add delay for better UX
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
     const res = await axios.get(`/users/by-code/${trimmedCode}`);
     if (res.data && res.data.data) {
       const userData = res.data.data;
-
-      // Simpan data lengkap user di localStorage
-      localStorage.setItem("user_data", JSON.stringify(userData));
+      userStore.setUser({ code: trimmedCode, ...userData });
 
       showNotification(
         "success",
@@ -476,7 +486,6 @@ const handleCode = async (code) => {
         2000
       );
 
-      // Delay before navigation to show success message
       setTimeout(() => {
         router.push({ name: "ChooseAction", query: { code: trimmedCode } });
       }, 1500);
@@ -489,8 +498,6 @@ const handleCode = async (code) => {
     }
   } catch (err) {
     console.error(err);
-
-    // Different error messages based on status code
     if (err.response?.status === 404) {
       showNotification(
         "error",
@@ -507,7 +514,7 @@ const handleCode = async (code) => {
       showNotification(
         "error",
         "Barcode Tidak Valid",
-        "Ini bukan barcode pengguna yang valid. Pastikan Anda memindai barcode ID pengguna, bukan barcode barang atau dokumen lain."
+        "Ini bukan barcode pengguna yang valid. Pastikan Anda memindai barcode ID pengguna."
       );
     }
   } finally {
@@ -525,7 +532,90 @@ const onInit = (promise) => {
     );
   });
 };
+
+
+// NFC AUTODETECT (Web NFC / WebSocket)
+const handleNfcCode = async (code) => {
+  const trimmed = code?.trim();
+  if (!trimmed) return;
+
+  try {
+    const res = await axios.get(`/users/by-nfc/${trimmed}`);
+    if (res.data && res.data.data) {
+      const userData = res.data.data;
+      userStore.setUser({ code_nfc: trimmed, ...userData });
+
+      showNotification(
+        "success",
+        "NFC Terdeteksi",
+        `Selamat datang, ${userData.name}`,
+        2000
+      );
+
+      setTimeout(() => {
+        router.push({ name: "ChooseAction", query: { code: trimmed } });
+      }, 1500);
+    } else {
+      showNotification(
+        "error",
+        "NFC Tidak Dikenali",
+        "Kartu tidak terdaftar. Silakan gunakan kartu ID pengguna."
+      );
+    }
+  } catch (err) {
+    console.error("NFC Error:", err);
+    showNotification(
+      "error",
+      "Gagal Membaca NFC",
+      "Terjadi kesalahan saat membaca NFC. Silakan coba lagi."
+    );
+  }
+};
+
+const startNfcListening = () => {
+  if ("NDEFReader" in window) {
+    const reader = new NDEFReader();
+    reader.scan().then(() => {
+      reader.onreading = (event) => {
+        const record = event.message.records[0];
+        const text = new TextDecoder().decode(record.data);
+        handleNfcCode(text);
+      };
+    }).catch((err) => {
+      console.warn("Web NFC tidak tersedia:", err);
+      connectWebSocket(); // fallback
+    });
+  } else {
+    connectWebSocket(); // fallback
+  }
+};
+
+const connectWebSocket = () => {
+  ws = new WebSocket("ws://localhost:3030");
+
+  ws.onopen = () => {
+    console.log("WebSocket NFC connected.");
+  };
+
+  ws.onmessage = (event) => {
+    const code = event.data;
+    handleNfcCode(code);
+  };
+
+  ws.onerror = (err) => {
+    console.warn("WebSocket NFC error:", err);
+  };
+};
+
+onMounted(() => {
+  startNfcListening();
+});
+
+onBeforeUnmount(() => {
+  if (ws) ws.close();
+});
 </script>
+
 
 <style scoped>
 @keyframes fade-in {

@@ -119,10 +119,11 @@
 import { ref, computed, onMounted } from "vue";
 import { useRouter } from "vue-router";
 import axios from "../services/api";
+import { useUserStore } from "@/stores/userStore";
 
 const router = useRouter();
+const userStore = useUserStore();
 const borrowings = ref([]);
-const user = ref({});
 const loading = ref(true);
 
 // Pagination
@@ -149,43 +150,17 @@ const goBack = () => {
   router.push("/choose-action");
 };
 
-const getUserFromLocalStorage = () => {
-  let userData = localStorage.getItem("user");
-  if (!userData) {
-    userData = localStorage.getItem("user_data");
-  }
-
-  if (userData) {
-    try {
-      user.value = JSON.parse(userData);
-      console.log("✅ User ditemukan di localStorage:", user.value);
-    } catch (e) {
-      console.error("❌ Gagal parse user dari localStorage:", e);
-    }
-  } else {
-    console.error("❌ User tidak ditemukan di localStorage");
-  }
-};
-
 const loadUserBorrowings = async () => {
   try {
-    if (!user.value?.code && !user.value?.code_nfc) {
+    if (!userStore.code && !userStore.code_nfc) {
       console.warn("⏳ User belum siap, hentikan loadUserBorrowings");
       return;
     }
 
     loading.value = true;
-    let endpoint = "";
-
-    if (user.value.code_nfc) {
-      console.log(`🔍 Ambil data peminjaman via NFC: ${user.value.code_nfc}`);
-      endpoint = `/public/borrowings/by-nfc/${user.value.code_nfc}`;
-    } else {
-      console.log(`🔍 Ambil data peminjaman via CODE: ${user.value.code}`);
-      endpoint = `/public/borrowings/by-code/${encodeURIComponent(
-        user.value.code
-      )}`;
-    }
+    let endpoint = userStore.code_nfc
+      ? `/public/borrowings/by-nfc/${userStore.code_nfc}`
+      : `/public/borrowings/by-code/${encodeURIComponent(userStore.code)}`;
 
     const res = await axios.get(endpoint);
     borrowings.value = res.data.data || [];
@@ -198,11 +173,10 @@ const loadUserBorrowings = async () => {
 };
 
 onMounted(async () => {
-  getUserFromLocalStorage();
-  if (user.value?.code || user.value?.code_nfc) {
+  if (userStore.code || userStore.code_nfc) {
     await loadUserBorrowings();
   } else {
-    console.error("❌ User tidak ditemukan di localStorage");
+    console.error("❌ User belum ada di Pinia");
   }
 });
 
@@ -217,3 +191,4 @@ const getInitials = (name) => {
   );
 };
 </script>
+
