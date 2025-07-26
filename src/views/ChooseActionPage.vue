@@ -279,12 +279,12 @@ const goToBorrow = () => {
   router.push({ name: "Borrow", query: { code: userCode } });
 };
 
-const goToReturn = () => {
-  router.push({ name: "PengembalianBarang", query: { code: userCode } });
-};
-
 const goToRoomLoan = () => {
   router.push({ name: "RoomLoan", query: { code: userCode } });
+};
+
+const goToReturn = () => {
+  router.push({ name: "PengembalianBarang", query: { code: userCode } });
 };
 
 const goToAcceptBorrow = () => {

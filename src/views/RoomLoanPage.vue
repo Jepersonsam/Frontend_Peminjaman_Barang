@@ -69,7 +69,6 @@ const userStore = useUserStore(); // Ambil user dari Pinia
 
 const rooms = ref([]);
 const bookings = ref([]);
-const weeklyBookings = ref([]);
 const selectedDate = ref("");
 
 const user = ref({});
@@ -132,7 +131,6 @@ const getRooms = async () => {
 const checkRoomAvailability = async () => {
   if (!form.value.room_id) {
     bookings.value = [];
-    weeklyBookings.value = [];
     return;
   }
   const dateToCheck =
@@ -142,21 +140,8 @@ const checkRoomAvailability = async () => {
       params: { room_id: form.value.room_id, date: dateToCheck },
     });
     bookings.value = res.data;
-    await getWeeklyBookings(form.value.room_id);
   } catch (err) {
     console.error("Gagal cek ketersediaan ruangan", err);
-  }
-};
-
-/** === Ambil jadwal mingguan === */
-const getWeeklyBookings = async (roomId) => {
-  try {
-    const res = await axios.get(`/weekly-room-loans/by-room`, {
-      params: { room_id: roomId },
-    });
-    weeklyBookings.value = res.data;
-  } catch (err) {
-    console.error("Gagal mengambil booking mingguan", err);
   }
 };
 
@@ -171,7 +156,7 @@ const calendarOptions = ref({
   },
   initialDate: new Date().toISOString().slice(0, 10),
   events: computed(() => {
-    const dailyEvents = bookings.value.map((booking) => ({
+    return bookings.value.map((booking) => ({
       title: `${booking.borrower_name}${
         booking.purpose ? ` (${booking.purpose})` : ""
       }`,
@@ -180,24 +165,12 @@ const calendarOptions = ref({
       color: getStatusColor(booking.status),
       extendedProps: { type: "daily", data: booking },
     }));
-    const weeklyEvents = weeklyBookings.value.map((booking) => ({
-      title: `${booking.borrower_name}${
-        booking.purpose ? ` (${booking.purpose})` : ""
-      }`,
-      daysOfWeek: [booking.day_of_week],
-      startTime: booking.start_time,
-      endTime: booking.end_time,
-      startRecur: booking.start_date,
-      endRecur: booking.end_date,
-      color: getStatusColor(booking.status),
-      extendedProps: { type: "weekly", data: booking },
-    }));
-    return [...dailyEvents, ...weeklyEvents];
   }),
+
   slotDuration: "00:30:00",
   slotMinTime: "07:00:00",
-  slotMaxTime: "20:00:00",
-  allDaySlot: false,
+  slotMaxTime: "21:00:00",
+  allDaySlot: true,
   selectable: true,
   selectMirror: true,
   selectOverlap: false,
@@ -275,18 +248,20 @@ const formatDateTime = (dateTime) => {
   )}`;
 };
 
-/** === Handle Drag (Pilih Jadwal) === */
 const handleDrag = (info) => {
   const start = new Date(info.start);
   const end = new Date(info.end);
 
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  if (start < today) {
+  const now = new Date();
+  // Set waktu sekarang ke jam, menit, detik, dan milidetik
+  now.setSeconds(0, 0);
+
+  // Validasi waktu
+  if (start < now) {
     Swal.fire({
       icon: "warning",
-      title: "Tanggal Tidak Valid",
-      text: "Anda tidak dapat memilih tanggal yang sudah lewat.",
+      title: "Waktu Tidak Valid",
+      text: "Anda tidak dapat memilih waktu yang sudah lewat.",
     });
     return;
   }
