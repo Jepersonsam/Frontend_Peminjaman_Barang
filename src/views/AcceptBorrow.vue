@@ -68,7 +68,7 @@
           >
             {{ getInitials(b.user.name) }}
           </div>
-          <div class="text-sm text-gray-700">
+          <div class="text-sm text-gray-700 break-all">
             {{ b.user.name }} ({{ b.user.code }})
           </div>
         </div>
@@ -191,4 +191,3 @@ const getInitials = (name) => {
   );
 };
 </script>
-

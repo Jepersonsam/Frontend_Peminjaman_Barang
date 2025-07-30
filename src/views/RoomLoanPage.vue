@@ -10,21 +10,89 @@
         <p class="text-gray-500">Pilih ruangan dan buat jadwal peminjaman</p>
       </div>
 
-      <!-- Pilih Ruangan -->
       <div class="mb-6">
-        <label class="block font-semibold text-lg text-gray-700 mb-2"
-          >Pilih Ruangan</label
-        >
-        <select
-          v-model="form.room_id"
-          class="w-full px-5 py-4 border-2 border-gray-200 rounded-2xl bg-gray-50"
-          required
-        >
-          <option disabled value="">-- Pilih Ruangan --</option>
-          <option v-for="room in rooms" :key="room.id" :value="room.id">
-            {{ room.name }} - {{ room.location }}
-          </option>
-        </select>
+        <label class="block font-semibold text-lg text-gray-700 mb-2">
+          Pilih Ruangan
+        </label>
+
+        <Listbox v-model="form.room_id">
+          <div class="relative">
+            <ListboxButton
+              class="relative w-full cursor-pointer rounded-2xl bg-gray-50 py-4 pl-5 pr-10 text-left border-2 border-gray-200 focus:outline-none focus:ring-2 focus:ring-indigo-500"
+            >
+              <span class="block truncate">
+                {{
+                  rooms.find((room) => room.id === form.room_id)
+                    ? rooms.find((room) => room.id === form.room_id).name +
+                      " - " +
+                      rooms.find((room) => room.id === form.room_id).location
+                    : "Pilih Ruangan"
+                }}
+              </span>
+              <span
+                class="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-4"
+              >
+                <svg
+                  class="h-5 w-5 text-gray-400"
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 20 20"
+                  fill="currentColor"
+                >
+                  <path
+                    fill-rule="evenodd"
+                    d="M10 3a1 1 0 01.707 1.707L6.414 9l4.293 4.293a1 1 0 11-1.414 1.414l-5-5a1 1 0 010-1.414l5-5A1 1 0 0110 3z"
+                    clip-rule="evenodd"
+                  />
+                </svg>
+              </span>
+            </ListboxButton>
+
+            <Transition
+              leave-active-class="transition ease-in duration-100"
+              leave-from-class="opacity-100"
+              leave-to-class="opacity-0"
+            >
+              <ListboxOptions
+                class="absolute mt-1 max-h-60 w-full overflow-auto rounded-md bg-white py-1 text-base shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none sm:text-sm z-10"
+              >
+                <ListboxOption
+                  v-for="room in rooms"
+                  :key="room.id"
+                  :value="room.id"
+                  class="{ 'text-white bg-indigo-600': selected, 'text-gray-900': !selected } cursor-pointer select-none relative py-2 pl-10 pr-4"
+                  v-slot="{ selected, active }"
+                >
+                  <span
+                    class="block truncate"
+                    :class="{
+                      'font-medium': selected,
+                      'font-normal': !selected,
+                    }"
+                  >
+                    {{ room.name }} - {{ room.location }}
+                  </span>
+                  <span
+                    v-if="selected"
+                    class="absolute inset-y-0 left-0 flex items-center pl-3 text-indigo-600"
+                  >
+                    <svg
+                      class="h-5 w-5"
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 20 20"
+                      fill="currentColor"
+                    >
+                      <path
+                        fill-rule="evenodd"
+                        d="M16.707 5.293a1 1 0 00-1.414 0L9 11.586 6.707 9.293a1 1 0 00-1.414 1.414l3 3a1 1 0 001.414 0l7-7a1 1 0 000-1.414z"
+                        clip-rule="evenodd"
+                      />
+                    </svg>
+                  </span>
+                </ListboxOption>
+              </ListboxOptions>
+            </Transition>
+          </div>
+        </Listbox>
       </div>
 
       <!-- Tampilkan Kalender jika sudah pilih ruangan -->
@@ -54,6 +122,14 @@ import axios from "@/services/api";
 import { useRouter } from "vue-router";
 import Swal from "sweetalert2";
 import "sweetalert2/dist/sweetalert2.min.css";
+import {
+  Listbox,
+  ListboxButton,
+  ListboxLabel,
+  ListboxOption,
+  ListboxOptions,
+} from "@headlessui/vue";
+import { CheckIcon, ChevronUpDownIcon } from "@heroicons/vue/20/solid";
 
 import Keyboard from "simple-keyboard";
 import "simple-keyboard/build/css/index.css";
