@@ -46,72 +46,156 @@
         </div>
       </div>
 
-      <!-- 1. User Card -->
+      <!-- 1. User Info Card Premium -->
       <div
-        class="bg-white rounded-[1.5rem] p-8 shadow-sm border border-[#F1F5F9] relative overflow-hidden"
+        class="relative bg-white rounded-[1.5rem] p-8 shadow-sm border border-slate-100 overflow-hidden group"
       >
-        <!-- Subtly deco circles in card -->
-        <div class="absolute top-6 right-6 flex gap-2">
-          <div class="w-6 h-6 rounded-full bg-[#F1F5F9]"></div>
-          <div class="w-10 h-10 rounded-full bg-[#F8FAFC] -mt-2 -mr-2"></div>
+        <!-- Modern Decorative Background -->
+        <div
+          class="absolute top-0 right-0 w-64 h-64 bg-gradient-to-br from-blue-100/40 to-indigo-50/20 rounded-full blur-3xl -translate-y-1/2 translate-x-1/3 transition-transform duration-700 group-hover:scale-110"
+        ></div>
+        <div
+          class="absolute bottom-0 left-0 w-40 h-40 bg-gradient-to-tr from-sky-100/40 to-transparent rounded-full blur-2xl translate-y-1/3 -translate-x-1/3"
+        ></div>
+
+        <!-- Abstract Pattern / Dots -->
+        <div class="absolute top-4 right-5 opacity-[0.03]">
+          <svg
+            width="40"
+            height="40"
+            viewBox="0 0 40 40"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <pattern
+              id="dots"
+              x="0"
+              y="0"
+              width="8"
+              height="8"
+              patternUnits="userSpaceOnUse"
+            >
+              <circle cx="2" cy="2" r="1.5" fill="currentColor" />
+            </pattern>
+            <rect width="40" height="40" fill="url(#dots)" />
+          </svg>
         </div>
 
-        <div class="flex items-start gap-4 mb-6">
+        <div class="relative z-10">
           <div
-            class="w-[64px] h-[64px] rounded-full flex items-center justify-center bg-blue-50 border border-blue-100 text-blue-600 font-bold text-3xl shrink-0"
+            class="flex flex-col sm:flex-row items-start sm:items-center gap-5 mb-7"
           >
-            {{ user?.name?.charAt(0) || "S" }}
-          </div>
-          <div class="flex flex-col pt-1.5">
-            <h2 class="text-xl font-bold text-slate-800 leading-none mb-2">
-              {{ user?.name || "Memuat..." }}
-            </h2>
-            <p class="text-slate-400 font-semibold text-sm tracking-wider">
-              {{ user?.code || "-" }}
-            </p>
-          </div>
-        </div>
+            <!-- Avatar -->
+            <div class="relative">
+              <div
+                class="absolute inset-0 bg-blue-500 rounded-full blur-[10px] opacity-40 group-hover:opacity-60 transition-opacity"
+              ></div>
+              <div
+                class="relative w-[76px] h-[76px] rounded-full flex items-center justify-center bg-gradient-to-br from-blue-500 to-indigo-600 border-[3px] border-white shadow-md text-white font-extrabold text-3xl shrink-0"
+              >
+                {{ user?.name?.charAt(0)?.toUpperCase() || "S" }}
+              </div>
+            </div>
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <div
-            class="flex items-center gap-3 bg-[#F8FAFC] px-4 py-3.5 rounded-2xl border border-[#F1F5F9]"
-          >
-            <svg
-              class="w-5 h-5 text-slate-400"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
-              />
-            </svg>
-            <span class="text-slate-600 font-bold text-sm truncate">{{
-              user?.email || "-"
-            }}</span>
+            <!-- User Info -->
+            <div class="flex flex-col">
+              <div class="inline-flex items-center gap-2 mb-1.5">
+                <span
+                  class="px-2.5 py-0.5 rounded-md bg-blue-50 text-blue-600 font-bold text-[0.65rem] tracking-widest uppercase border border-blue-100"
+                >
+                  Data Peminjam
+                </span>
+              </div>
+              <h2
+                class="text-2xl font-black text-slate-800 tracking-tight leading-tight mb-1 cursor-default"
+              >
+                {{ user?.name || "Memuat Pengguna..." }}
+              </h2>
+              <div
+                class="flex items-center gap-2 text-slate-400 font-semibold text-[0.8rem] uppercase tracking-wider"
+              >
+                <svg
+                  class="w-4 h-4 text-slate-300"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M10 6H5a2 2 0 00-2 2v9a2 2 0 002 2h14a2 2 0 002-2V8a2 2 0 00-2-2h-5m-4 0V5a2 2 0 114 0v1m-4 0a2 2 0 104 0m-5 8a2 2 0 100-4 2 2 0 000 4zm0 0c1.306 0 2.417.835 2.83 2M9 14a3.001 3.001 0 00-2.83 2M15 11h3m-3 4h2"
+                  />
+                </svg>
+                ID: {{ user?.code || "-" }}
+              </div>
+            </div>
           </div>
-          <div
-            class="flex items-center gap-3 bg-[#F8FAFC] px-4 py-3.5 rounded-2xl border border-[#F1F5F9]"
-          >
-            <svg
-              class="w-5 h-5 text-slate-400"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
+
+          <!-- Contact Badges -->
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
+            <div
+              class="group/item flex items-center gap-3.5 bg-slate-50 hover:bg-white px-5 py-4 rounded-2xl border border-slate-100 hover:border-blue-100 hover:shadow-sm transition-all duration-300"
             >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
-              />
-            </svg>
-            <span class="text-slate-600 font-bold text-sm">{{
-              user?.phone || "-"
-            }}</span>
+              <div
+                class="w-10 h-10 rounded-xl bg-white border border-slate-100 group-hover/item:border-blue-100 group-hover/item:text-blue-500 text-slate-400 flex items-center justify-center shadow-sm shrink-0 transition-colors"
+              >
+                <svg
+                  class="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z"
+                  />
+                </svg>
+              </div>
+              <div class="flex flex-col w-full overflow-hidden">
+                <span
+                  class="text-[0.65rem] font-bold text-slate-400 uppercase tracking-widest mb-0.5"
+                  >Email</span
+                >
+                <span
+                  class="text-slate-700 font-bold text-[0.95rem] truncate w-full"
+                  >{{ user?.email || "-" }}</span
+                >
+              </div>
+            </div>
+
+            <div
+              class="group/item flex items-center gap-3.5 bg-slate-50 hover:bg-white px-5 py-4 rounded-2xl border border-slate-100 hover:border-blue-100 hover:shadow-sm transition-all duration-300"
+            >
+              <div
+                class="w-10 h-10 rounded-xl bg-white border border-slate-100 group-hover/item:border-blue-100 group-hover/item:text-blue-500 text-slate-400 flex items-center justify-center shadow-sm shrink-0 transition-colors"
+              >
+                <svg
+                  class="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z"
+                  />
+                </svg>
+              </div>
+              <div class="flex flex-col w-full overflow-hidden">
+                <span
+                  class="text-[0.65rem] font-bold text-slate-400 uppercase tracking-widest mb-0.5"
+                  >Telepon</span
+                >
+                <span
+                  class="text-slate-700 font-bold text-[0.95rem] truncate w-full"
+                  >{{ user?.phone || "-" }}</span
+                >
+              </div>
+            </div>
           </div>
         </div>
       </div>
