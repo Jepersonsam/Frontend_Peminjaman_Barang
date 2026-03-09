@@ -28,5 +28,5 @@ export const useUserStore = defineStore('user', {
       this.$reset()
     },
   },
-  //  persist:true,
+  persist: true,
 })

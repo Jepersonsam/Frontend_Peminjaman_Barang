@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import { useUserStore } from '@/stores/userStore'
 import ScanPage from '@/views/ScanPage.vue'
 import BorrowPage from '@/views/BorrowPage.vue'
 import ScanBarcodeReturn from '@/views/ScanBarcodeReturn.vue'
@@ -27,6 +28,29 @@ const routes = [
 const router = createRouter({
   history: createWebHistory(),
   routes,
+})
+
+// Route Protection (Navigation Guard)
+router.beforeEach((to, from, next) => {
+  // Daftar URL yang BOLEH diakses meskipun belum login/scan
+  const publicPages = ['/', '/scan-nfc', '/setting']
+  
+  // Apakah rute yang dituju butuh login?
+  const authRequired = !publicPages.includes(to.path)
+
+  if (authRequired) {
+    // Insialisasi store di DALAM guard setelah pinia aktif
+    const userStore = useUserStore()
+
+    // Jika store tidak punya kode user / kode nfc (berarti belum login)
+    if (!userStore.code && !userStore.code_nfc) {
+      // Tendang kembali ke halaman utama "/"
+      return next('/')
+    }
+  }
+
+  // Jika aman (sudah login / menuju halaman public), izinkan lewat
+  next()
 })
 
 export default router

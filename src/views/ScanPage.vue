@@ -1,19 +1,25 @@
 <template>
   <div
-    class="min-h-screen bg-gradient-to-br from-blue-500 via-white to-indigo-500 flex items-center justify-center px-4 py-8"
+    class="kiosk-root min-h-screen relative overflow-hidden flex items-center justify-center px-4 py-8 select-none"
   >
-    <!-- Background Pattern -->
-    <div class="absolute inset-0 opacity-5">
-      <div
-        class="absolute inset-0"
-        style="
-          background-image: url('data:image/svg+xml,%3Csvg width=\'60\' height=\'60\' viewBox=\'0 0 60 60\' xmlns=\'http://www.w3.org/2000/svg\'%3E%3Cg fill=\'none\' fill-rule=\'evenodd\'%3E%3Cg fill=\'%234F46E5\' fill-opacity=\'0.1\'%3E%3Cpath d=\'M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z\'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E');
-        "
-      ></div>
+    <!-- Animated Gradient Background -->
+    <div class="bg-layer"></div>
+    <div class="noise-layer"></div>
+
+    <!-- Floating Blobs -->
+    <div
+      class="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none z-0"
+    >
+      <div class="blob blob-1"></div>
+      <div class="blob blob-2"></div>
+      <div class="blob blob-3"></div>
     </div>
 
+    <!-- Grid Lines Decoration -->
+    <div class="grid-overlay absolute inset-0 pointer-events-none z-0"></div>
+
     <div
-      class="relative z-10 bg-white rounded-3xl shadow-2xl p-8 max-w-md sm:max-w-xl md:max-w-2xl w-full text-center animate-fade-in border border-gray-100"
+      class="relative z-10 bg-white/10 backdrop-blur-2xl rounded-[2.5rem] shadow-2xl p-8 max-w-md sm:max-w-xl md:max-w-2xl w-full text-center animate-fade-in border border-white/10"
     >
       <!-- Header Section -->
       <div class="mb-8">
@@ -48,16 +54,16 @@
           </div>
         </div>
 
-        <h1
-          class="text-4xl font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent mb-3"
-        >
+        <h1 class="text-4xl font-black text-white tracking-tight mb-3">
           Scan QR Code
         </h1>
 
         <div class="space-y-2">
-          <p class="text-gray-600 text-lg">Sistem Inventaris Digital</p>
+          <p class="text-white/60 font-medium text-lg">
+            Sistem Inventaris Digital
+          </p>
           <div
-            class="flex items-center justify-center space-x-2 text-sm text-gray-500"
+            class="flex items-center justify-center space-x-2 text-sm text-white/50"
           >
             <svg
               class="w-4 h-4"
@@ -72,7 +78,7 @@
                 d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
               />
             </svg>
-            <span>Arahkan kamera ke QRcode pengguna</span>
+            <span>Arahkan QR Code pengguna ke kamera</span>
           </div>
         </div>
       </div>
@@ -172,13 +178,11 @@
       </div>
 
       <!-- Instructions -->
-      <div
-        class="bg-gradient-to-r from-blue-50 to-purple-50 rounded-2xl p-6 mb-6 border border-blue-100"
-      >
-        <div class="flex items-start space-x-4">
-          <div class="bg-blue-100 rounded-full p-2 flex-shrink-0">
+      <div class="bg-white/5 rounded-[1.5rem] p-6 mb-6 border border-white/5">
+        <div class="flex items-start justify-center space-x-4">
+          <div class="bg-blue-500/20 rounded-full p-2.5 flex-shrink-0 mt-1">
             <svg
-              class="w-5 h-5 text-blue-600"
+              class="w-5 h-5 text-blue-400"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -198,18 +202,26 @@
             </svg>
           </div>
           <div class="text-left">
-            <h3 class="font-semibold text-gray-800 mb-2">Cara Menggunakan:</h3>
-            <ul class="text-sm text-gray-600 space-y-1">
+            <h3 class="font-bold text-white mb-2">Cara Menggunakan:</h3>
+            <ul
+              class="text-sm border-l border-white/10 pl-3 text-white/60 space-y-2"
+            >
               <li class="flex items-center">
-                <span class="w-1.5 h-1.5 bg-blue-400 rounded-full mr-2"></span>
-                Posisikan QR Code di dalam frame
+                <span
+                  class="w-[5px] h-[5px] bg-blue-400 shadow-[0_0_8px_rgba(96,165,250,0.8)] rounded-full mr-3 shrink-0"
+                ></span>
+                Posisikan QR Code di dalam frame kamera
               </li>
               <li class="flex items-center">
-                <span class="w-1.5 h-1.5 bg-blue-400 rounded-full mr-2"></span>
+                <span
+                  class="w-[5px] h-[5px] bg-blue-400 shadow-[0_0_8px_rgba(96,165,250,0.8)] rounded-full mr-3 shrink-0"
+                ></span>
                 Pastikan pencahayaan cukup terang
               </li>
               <li class="flex items-center">
-                <span class="w-1.5 h-1.5 bg-blue-400 rounded-full mr-2"></span>
+                <span
+                  class="w-[5px] h-[5px] bg-blue-400 shadow-[0_0_8px_rgba(96,165,250,0.8)] rounded-full mr-3 shrink-0"
+                ></span>
                 Tunggu hingga QR Code terbaca otomatis
               </li>
             </ul>
@@ -441,7 +453,6 @@ const showNotification = (type, title, message, duration = 4000) => {
   }, duration);
 };
 
-
 // QR CODE SCAN
 const onDecode = async (code) => {
   const extractLastSegment = (input) => {
@@ -465,7 +476,7 @@ const handleCode = async (code) => {
     showNotification(
       "error",
       "Gagal Membaca",
-      "Barcode tidak dapat dibaca. Silakan posisikan kamera dengan benar dan coba lagi."
+      "Barcode tidak dapat dibaca. Silakan posisikan kamera dengan benar dan coba lagi.",
     );
     isScanning.value = false;
     return;
@@ -483,7 +494,7 @@ const handleCode = async (code) => {
         "success",
         "Berhasil!",
         `Pengguna ditemukan: ${userData.name}`,
-        2000
+        2000,
       );
 
       setTimeout(() => {
@@ -493,7 +504,7 @@ const handleCode = async (code) => {
       showNotification(
         "warning",
         "Kode Tidak Dikenali",
-        "Barcode ini bukan milik pengguna yang terdaftar. Pastikan Anda memindai barcode pengguna, bukan barcode barang."
+        "Barcode ini bukan milik pengguna yang terdaftar. Pastikan Anda memindai barcode pengguna, bukan barcode barang.",
       );
     }
   } catch (err) {
@@ -502,19 +513,19 @@ const handleCode = async (code) => {
       showNotification(
         "error",
         "Pengguna Tidak Ditemukan",
-        "Barcode ini bukan milik pengguna yang terdaftar dalam sistem. Silakan hubungi administrator untuk bantuan."
+        "Barcode ini bukan milik pengguna yang terdaftar dalam sistem. Silakan hubungi administrator untuk bantuan.",
       );
     } else if (err.response?.status >= 500) {
       showNotification(
         "error",
         "Server Error",
-        "Terjadi kesalahan pada server. Silakan coba lagi dalam beberapa saat."
+        "Terjadi kesalahan pada server. Silakan coba lagi dalam beberapa saat.",
       );
     } else {
       showNotification(
         "error",
         "Barcode Tidak Valid",
-        "Ini bukan barcode pengguna yang valid. Pastikan Anda memindai barcode ID pengguna."
+        "Ini bukan barcode pengguna yang valid. Pastikan Anda memindai barcode ID pengguna.",
       );
     }
   } finally {
@@ -528,11 +539,10 @@ const onInit = (promise) => {
     showNotification(
       "error",
       "Kamera Tidak Tersedia",
-      "Tidak dapat mengakses kamera. Pastikan browser memiliki izin akses kamera dan perangkat kamera berfungsi dengan baik."
+      "Tidak dapat mengakses kamera. Pastikan browser memiliki izin akses kamera dan perangkat kamera berfungsi dengan baik.",
     );
   });
 };
-
 
 // NFC AUTODETECT (Web NFC / WebSocket)
 const handleNfcCode = async (code) => {
@@ -549,7 +559,7 @@ const handleNfcCode = async (code) => {
         "success",
         "NFC Terdeteksi",
         `Selamat datang, ${userData.name}`,
-        2000
+        2000,
       );
 
       setTimeout(() => {
@@ -559,7 +569,7 @@ const handleNfcCode = async (code) => {
       showNotification(
         "error",
         "NFC Tidak Dikenali",
-        "Kartu tidak terdaftar. Silakan gunakan kartu ID pengguna."
+        "Kartu tidak terdaftar. Silakan gunakan kartu ID pengguna.",
       );
     }
   } catch (err) {
@@ -567,7 +577,7 @@ const handleNfcCode = async (code) => {
     showNotification(
       "error",
       "Gagal Membaca NFC",
-      "Terjadi kesalahan saat membaca NFC. Silakan coba lagi."
+      "Terjadi kesalahan saat membaca NFC. Silakan coba lagi.",
     );
   }
 };
@@ -575,16 +585,19 @@ const handleNfcCode = async (code) => {
 const startNfcListening = () => {
   if ("NDEFReader" in window) {
     const reader = new NDEFReader();
-    reader.scan().then(() => {
-      reader.onreading = (event) => {
-        const record = event.message.records[0];
-        const text = new TextDecoder().decode(record.data);
-        handleNfcCode(text);
-      };
-    }).catch((err) => {
-      console.warn("Web NFC tidak tersedia:", err);
-      connectWebSocket(); // fallback
-    });
+    reader
+      .scan()
+      .then(() => {
+        reader.onreading = (event) => {
+          const record = event.message.records[0];
+          const text = new TextDecoder().decode(record.data);
+          handleNfcCode(text);
+        };
+      })
+      .catch((err) => {
+        console.warn("Web NFC tidak tersedia:", err);
+        connectWebSocket(); // fallback
+      });
   } else {
     connectWebSocket(); // fallback
   }
@@ -615,7 +628,6 @@ onBeforeUnmount(() => {
   if (ws) ws.close();
 });
 </script>
-
 
 <style scoped>
 @keyframes fade-in {
@@ -701,5 +713,98 @@ onBeforeUnmount(() => {
 /* Custom gradient border effect */
 .border-gradient-to-r {
   border-image: linear-gradient(to right, #60a5fa, #a855f7) 1;
+}
+
+/* ── ChooseAction Background Classes ── */
+.kiosk-root {
+  background-color: #0b1120;
+  color: white;
+}
+.bg-layer {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(
+      circle at 15% 50%,
+      rgba(99, 102, 241, 0.15) 0%,
+      transparent 50%
+    ),
+    radial-gradient(
+      circle at 85% 30%,
+      rgba(59, 130, 246, 0.15) 0%,
+      transparent 50%
+    );
+  z-index: 0;
+}
+.noise-layer {
+  position: absolute;
+  inset: 0;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E");
+  opacity: 1;
+  pointer-events: none;
+  z-index: 0;
+  mix-blend-mode: overlay;
+}
+.blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  animation: blobMove 12s infinite ease-in-out;
+}
+.blob-1 {
+  top: -15%;
+  left: -10%;
+  width: 480px;
+  height: 480px;
+  background: radial-gradient(
+    circle,
+    rgba(99, 102, 241, 0.35) 0%,
+    transparent 70%
+  );
+}
+.blob-2 {
+  top: -5%;
+  right: -10%;
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(
+    circle,
+    rgba(59, 130, 246, 0.25) 0%,
+    transparent 70%
+  );
+  animation-delay: 3s;
+}
+.blob-3 {
+  bottom: -20%;
+  left: 20%;
+  width: 500px;
+  height: 500px;
+  background: radial-gradient(
+    circle,
+    rgba(139, 92, 246, 0.2) 0%,
+    transparent 70%
+  );
+  animation-delay: 6s;
+}
+@keyframes blobMove {
+  0% {
+    transform: translate(0, 0) scale(1);
+  }
+  33% {
+    transform: translate(30px, -40px) scale(1.08);
+  }
+  66% {
+    transform: translate(-20px, 25px) scale(0.95);
+  }
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+}
+.grid-overlay {
+  background-image: linear-gradient(
+      rgba(255, 255, 255, 0.03) 1px,
+      transparent 1px
+    ),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
+  background-size: 60px 60px;
 }
 </style>
