@@ -232,11 +232,18 @@
                 />
               </svg>
             </div>
-            <span
-              class="font-extrabold text-base text-slate-700 bg-transparent truncate"
-            >
-              {{ item.name }}
-            </span>
+            <div class="flex flex-col flex-1 truncate">
+              <span
+                class="font-extrabold text-base text-slate-700 bg-transparent truncate"
+              >
+                {{ item.name }}
+              </span>
+              <span
+                class="font-semibold text-slate-400 text-[0.75rem] uppercase tracking-wider bg-slate-100 rounded self-start px-1.5 mt-1"
+              >
+                {{ item.serial_code || "IOT-" + item.id }}
+              </span>
+            </div>
           </div>
         </div>
         <div

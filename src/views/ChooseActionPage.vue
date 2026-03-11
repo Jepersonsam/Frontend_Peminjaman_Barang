@@ -43,7 +43,7 @@
           <h2
             class="font-extrabold text-xl text-white tracking-tight leading-none"
           >
-            Sistem Inventaris
+            Sistem Peminjaman Barang & Ruangan
           </h2>
           <p
             class="text-white/50 text-xs font-semibold tracking-widest uppercase mt-0.5"

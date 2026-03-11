@@ -260,10 +260,17 @@
 <script setup>
 import { ref } from "vue";
 import { QrcodeStream } from "vue-qrcode-reader";
-import { useRouter } from "vue-router";
+import { useRouter, useRoute } from "vue-router";
+import { useUserStore } from "@/stores/userStore";
 import axios from "@/services/api";
 
 const router = useRouter();
+const route = useRoute();
+const userStore = useUserStore();
+
+// Ambil user_code dari store atau query param
+const userCode =
+  userStore.code || userStore.code_nfc || route.query.code?.trim();
 
 const manualCode = ref("");
 const notification = ref(null);
@@ -333,9 +340,20 @@ const handleReturn = async (code) => {
   isScanning.value = true;
   hideNotification();
 
+  if (!userCode) {
+    showNotification(
+      "error",
+      "Sesi Tidak Valid",
+      "Data pengguna tidak ditemukan. Silakan scan ulang kartu Anda.",
+    );
+    isScanning.value = false;
+    return;
+  }
+
   try {
     const res = await axios.post("/public/return-item", {
       serial_code: code.trim(),
+      user_code: userCode,
     });
 
     const itemName =
@@ -364,6 +382,18 @@ const handleReturn = async (code) => {
         "warning",
         "Barang Sudah Dikembalikan",
         "Barang sudah dikembalikan sebelumnya.",
+      );
+    } else if (err.response?.status === 403) {
+      showNotification(
+        "error",
+        "Akses Ditolak",
+        "Anda bukan peminjam barang ini. Hanya peminjam yang dapat mengembalikan.",
+      );
+    } else if (err.response?.status === 422) {
+      showNotification(
+        "error",
+        "Data Tidak Valid",
+        "Kode pengguna tidak ditemukan. Silakan scan ulang kartu Anda.",
       );
     } else {
       showNotification(
