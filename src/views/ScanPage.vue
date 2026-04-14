@@ -177,54 +177,69 @@
         </div>
       </div>
 
-      <!-- Instructions -->
-      <div class="bg-white/5 rounded-[1.5rem] p-6 mb-6 border border-white/5">
-        <div class="flex items-start justify-center space-x-4">
-          <div class="bg-blue-500/20 rounded-full p-2.5 flex-shrink-0 mt-1">
-            <svg
-              class="w-5 h-5 text-blue-400"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-            >
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
-              />
-              <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
-                stroke-width="2"
-                d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
-              />
-            </svg>
-          </div>
-          <div class="text-left">
-            <h3 class="font-bold text-white mb-2">Cara Menggunakan:</h3>
-            <ul
-              class="text-sm border-l border-white/10 pl-3 text-white/60 space-y-2"
-            >
-              <li class="flex items-center">
-                <span
-                  class="w-[5px] h-[5px] bg-blue-400 shadow-[0_0_8px_rgba(96,165,250,0.8)] rounded-full mr-3 shrink-0"
-                ></span>
-                Posisikan QR Code di dalam frame kamera
-              </li>
-              <li class="flex items-center">
-                <span
-                  class="w-[5px] h-[5px] bg-blue-400 shadow-[0_0_8px_rgba(96,165,250,0.8)] rounded-full mr-3 shrink-0"
-                ></span>
-                Pastikan pencahayaan cukup terang
-              </li>
-              <li class="flex items-center">
-                <span
-                  class="w-[5px] h-[5px] bg-blue-400 shadow-[0_0_8px_rgba(96,165,250,0.8)] rounded-full mr-3 shrink-0"
-                ></span>
-                Tunggu hingga QR Code terbaca otomatis
-              </li>
-            </ul>
+      <!-- Premium Instructions Card -->
+      <div class="instruction-card group">
+        <div class="instruction-card-glow"></div>
+        <div class="instruction-card-inner">
+          <div class="flex flex-col sm:flex-row items-center sm:items-start gap-6">
+            <!-- Animated Icon Section -->
+            <div class="instruction-icon-box">
+              <div class="icon-pulse"></div>
+              <svg
+                class="w-8 h-8 text-blue-400 relative z-10"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.5"
+                  d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                />
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="1.5"
+                  d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
+                />
+              </svg>
+            </div>
+
+            <div class="text-left flex-1">
+              <h3 class="instruction-title">Cara Menggunakan:</h3>
+              
+              <div class="space-y-4">
+                <div class="instruction-step group/step">
+                  <div class="step-indicator">
+                    <div class="step-dot"></div>
+                    <div class="step-line"></div>
+                  </div>
+                  <div class="step-content">
+                    <p class="step-text">Posisikan <span class="text-blue-400 font-bold">QR Code</span> di dalam frame kamera</p>
+                  </div>
+                </div>
+
+                <div class="instruction-step group/step">
+                  <div class="step-indicator">
+                    <div class="step-dot"></div>
+                    <div class="step-line"></div>
+                  </div>
+                  <div class="step-content">
+                    <p class="step-text">Pastikan <span class="text-purple-400 font-bold">Pencahayaan</span> cukup terang</p>
+                  </div>
+                </div>
+
+                <div class="instruction-step group/step">
+                  <div class="step-indicator">
+                    <div class="step-dot"></div>
+                  </div>
+                  <div class="step-content">
+                    <p class="step-text">Tunggu hingga QR Code <span class="text-emerald-400 font-bold">terbaca otomatis</span></p>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -622,6 +637,18 @@ const connectWebSocket = () => {
 
 onMounted(() => {
   startNfcListening();
+  
+  // Mouse tracking for instruction card glow
+  const cards = document.querySelectorAll('.instruction-card');
+  cards.forEach(card => {
+    card.onmousemove = e => {
+      const rect = card.getBoundingClientRect();
+      const x = e.clientX - rect.left;
+      const y = e.clientY - rect.top;
+      card.style.setProperty('--mouse-x', `${x}px`);
+      card.style.setProperty('--mouse-y', `${y}px`);
+    };
+  });
 });
 
 onBeforeUnmount(() => {
@@ -806,5 +833,133 @@ onBeforeUnmount(() => {
     ),
     linear-gradient(90deg, rgba(255, 255, 255, 0.03) 1px, transparent 1px);
   background-size: 60px 60px;
+}
+/* ── Premium Instruction Card ── */
+.instruction-card {
+  position: relative;
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 2rem;
+  padding: 1px;
+  overflow: hidden;
+  margin-bottom: 2rem;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.instruction-card:hover {
+  background: rgba(255, 255, 255, 0.05);
+  transform: translateY(-2px);
+  border-color: rgba(255, 255, 255, 0.1);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+}
+
+.instruction-card-inner {
+  position: relative;
+  z-index: 2;
+  padding: 1.5rem 2rem;
+  background: rgba(15, 23, 42, 0.4);
+  backdrop-filter: blur(20px);
+  border-radius: 2rem;
+}
+
+.instruction-card-glow {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(
+    600px circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
+    rgba(59, 130, 246, 0.06),
+    transparent 40%
+  );
+  z-index: 1;
+  opacity: 0;
+  transition: opacity 0.5s;
+}
+
+.instruction-card:hover .instruction-card-glow {
+  opacity: 1;
+}
+
+.instruction-icon-box {
+  position: relative;
+  width: 64px;
+  height: 64px;
+  background: rgba(59, 130, 246, 0.1);
+  border: 1px solid rgba(59, 130, 246, 0.2);
+  border-radius: 1.25rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.icon-pulse {
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background: rgba(59, 130, 246, 0.2);
+  filter: blur(8px);
+  animation: pulse-icon 2s infinite;
+}
+
+@keyframes pulse-icon {
+  0% { transform: scale(0.9); opacity: 0.5; }
+  50% { transform: scale(1.1); opacity: 0.8; }
+  100% { transform: scale(0.9); opacity: 0.5; }
+}
+
+.instruction-title {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #fff;
+  margin-bottom: 1.25rem;
+  letter-spacing: -0.01em;
+}
+
+.instruction-step {
+  display: flex;
+  gap: 1rem;
+}
+
+.step-indicator {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding-top: 0.5rem;
+}
+
+.step-dot {
+  width: 10px;
+  height: 10px;
+  background: #3b82f6;
+  border-radius: 50%;
+  box-shadow: 0 0 12px rgba(59, 130, 246, 0.8);
+  transition: all 0.3s;
+}
+
+.instruction-step:hover .step-dot {
+  transform: scale(1.3);
+  background: #60a5fa;
+  box-shadow: 0 0 20px rgba(59, 130, 246, 1);
+}
+
+.step-line {
+  width: 2px;
+  flex: 1;
+  background: linear-gradient(to bottom, rgba(59, 130, 246, 0.5), transparent);
+  margin-top: 0.5rem;
+}
+
+.step-text {
+  font-size: 0.9375rem;
+  color: rgba(255, 255, 255, 0.5);
+  line-height: 1.6;
+  transition: color 0.3s;
+}
+
+.instruction-step:hover .step-text {
+  color: rgba(255, 255, 255, 0.9);
 }
 </style>

@@ -159,62 +159,6 @@
           <!-- <div class="card-badge card-badge-blue">Tersedia</div> -->
         </button>
 
-        <!-- Card: Kembalikan Barang -->
-        <button
-          @click="goToReturn"
-          class="action-card group animate-fade-in-up"
-          style="animation-delay: 200ms"
-        >
-          <div class="action-card-glow glow-emerald"></div>
-          <div class="action-card-inner">
-            <div
-              class="card-icon-wrap bg-emerald-500/20 text-emerald-300 group-hover:bg-emerald-500/30 group-hover:scale-110 transition-all duration-300"
-            >
-              <svg
-                class="w-9 h-9"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="1.8"
-                  d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"
-                />
-              </svg>
-            </div>
-            <div class="card-content">
-              <h3
-                class="card-title group-hover:text-emerald-300 transition-colors"
-              >
-                Kembalikan Barang
-              </h3>
-              <p class="card-desc">
-                Kembalikan barang yang sudah selesai dipakai
-              </p>
-            </div>
-            <div
-              class="card-arrow text-emerald-400/40 group-hover:text-emerald-400 group-hover:translate-x-1 transition-all duration-300"
-            >
-              <svg
-                class="w-6 h-6"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                  stroke-width="2.5"
-                  d="M14 5l7 7m0 0l-7 7m7-7H3"
-                />
-              </svg>
-            </div>
-          </div>
-          <!-- <div class="card-badge card-badge-emerald">Cepat & Mudah</div> -->
-        </button>
-
         <!-- Card: Booking Ruangan -->
         <button
           @click="goToRoomLoan"
@@ -358,10 +302,6 @@ const goToBorrow = () => {
 
 const goToRoomLoan = () => {
   router.push({ name: "RoomLoan", query: { code: userCode } });
-};
-
-const goToReturn = () => {
-  router.push({ name: "PengembalianBarang", query: { code: userCode } });
 };
 
 const goToAcceptBorrow = () => {
