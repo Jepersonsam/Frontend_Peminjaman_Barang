@@ -214,9 +214,10 @@
         </button>
 
         <!-- Card: Status Pengajuan -->
+        <div class="col-span-1 md:col-span-2 flex justify-center">
         <button
           @click="goToAcceptBorrow"
-          class="action-card group animate-fade-in-up"
+          class="action-card group animate-fade-in-up w-full max-w-md"
           style="animation-delay: 400ms"
         >
           <div class="action-card-glow glow-amber"></div>
@@ -266,6 +267,7 @@
           </div>
           <!-- <div class="card-badge card-badge-amber">Real-time</div> -->
         </button>
+        </div>
       </div>
     </div>
 
